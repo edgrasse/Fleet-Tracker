@@ -711,7 +711,57 @@
       text-decoration: line-through;
       opacity: 0.6;
     }
-  </style>
+
+    /* Vehicle Method Buttons */
+    .vehicle-method-button {
+      padding: 1.5rem;
+      border: 2px solid var(--sand);
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .vehicle-method-button:hover {
+      border-color: var(--accent);
+      background: var(--foam);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(212, 132, 74, 0.2);
+    }
+
+    .vehicle-method-button strong {
+      font-size: 1.1rem;
+      color: var(--water);
+      display: block;
+    }
+
+    .vehicle-method-button small {
+      font-size: 0.85rem;
+      color: var(--stone);
+      display: block;
+    }
+
+    /* Vehicle Wizard Steps */
+    .vehicle-wizard-step {
+      animation: fadeIn 0.4s ease-in;
+    }
+
+    .vehicle-wizard-step h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      color: var(--water);
+      margin-bottom: 1rem;
+    }
+
+    .vehicle-wizard-step p {
+      margin-bottom: 1.5rem;
+    }
 </head>
 <body>
   <!-- Service Worker Registration -->
@@ -884,69 +934,226 @@
     </div>
   </div>
 
-  <!-- Add Vehicle Modal -->
+  <!-- Add Vehicle Modal - Step 1: Choose Method -->
   <div id="addVehicleModal" class="modal" onclick="closeAddVehicleModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <h2>Add New Vehicle</h2>
-      <form onsubmit="saveVehicle(event)">
-        <div class="form-group">
-          <label>Vehicle Name *</label>
-          <input type="text" id="vehicleName" required placeholder="e.g., Grady White 30">
-        </div>
-
-        <div class="form-group">
-          <label>Vehicle Type *</label>
-          <select id="vehicleType" required onchange="updateSpecificationsFields()">
-            <option value="">Select type...</option>
-            <option value="boat">⛵ Boat</option>
-            <option value="snowmobile">🏂 Snowmobile</option>
-            <option value="jet_ski">🚤 Jet Ski</option>
-            <option value="boat_lift">⬆️ Boat Lift</option>
-            <option value="truck">🚛 Truck</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Make</label>
-          <input type="text" id="vehicleMake" placeholder="e.g., Grady-White">
-        </div>
-
-        <div class="form-group">
-          <label>Model</label>
-          <input type="text" id="vehicleModel" placeholder="e.g., 30 Express">
-        </div>
-
-        <div class="form-group">
-          <label>Year</label>
-          <input type="number" id="vehicleYear" placeholder="e.g., 2019">
-        </div>
-
-        <div class="form-group">
-          <label>Engine Type</label>
-          <input type="text" id="vehicleEngine" placeholder="e.g., Twin Mercury Verado 400HP">
-        </div>
-
-        <div class="form-group">
-          <label>Hull/VIN Number</label>
-          <input type="text" id="vehicleHullVin" placeholder="e.g., GW00012345">
-        </div>
-
-        <div class="form-group">
-          <label>Concerns (comma-separated)</label>
-          <textarea id="vehicleConcerns" placeholder="e.g., Saltwater corrosion, Winterization, Fuel stabilization"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Notes</label>
-          <textarea id="vehicleNotes" placeholder="Additional notes about this vehicle..."></textarea>
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
+      <!-- Step 1: Choose Method -->
+      <div id="vehicleStep1" class="vehicle-wizard-step">
+        <h2>Add New Vehicle</h2>
+        <p style="color: var(--stone); margin-bottom: 2rem;">Choose how you'd like to add this vehicle to your fleet.</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <button type="button" class="vehicle-method-button" onclick="selectVehicleMethod('manual')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">✍️</div>
+            <strong>Manual Entry</strong>
+            <small>Type in vehicle details</small>
+          </button>
+          
+          <button type="button" class="vehicle-method-button" onclick="selectVehicleMethod('document')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+            <strong>Upload Document</strong>
+            <small>Scan title, registration, or manual (AI extracts details)</small>
+          </button>
+          
+          <button type="button" class="vehicle-method-button" onclick="selectVehicleMethod('photo')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📸</div>
+            <strong>Photo Scan</strong>
+            <small>Take photo of vehicle nameplate/sticker (AI identifies details)</small>
+          </button>
         </div>
 
         <div class="modal-buttons">
           <button type="button" class="btn btn-secondary" onclick="closeAddVehicleModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Vehicle</button>
         </div>
-      </form>
+      </div>
+
+      <!-- Step 2: Manual Entry -->
+      <div id="vehicleStep2Manual" class="vehicle-wizard-step" style="display: none;">
+        <h2>Add Vehicle - Manual Entry</h2>
+        <form onsubmit="saveVehicleManual(event)">
+          <div class="form-group">
+            <label>Vehicle Name *</label>
+            <input type="text" id="vehicleName" required placeholder="e.g., Grady White 30">
+          </div>
+
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select id="vehicleType" required>
+              <option value="">Select type...</option>
+              <option value="boat">⛵ Boat</option>
+              <option value="snowmobile">🏂 Snowmobile</option>
+              <option value="jet_ski">🚤 Jet Ski</option>
+              <option value="boat_lift">⬆️ Boat Lift</option>
+              <option value="truck">🚛 Truck</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Make</label>
+            <input type="text" id="vehicleMake" placeholder="e.g., Grady-White">
+          </div>
+
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="vehicleModel" placeholder="e.g., 30 Express">
+          </div>
+
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" id="vehicleYear" placeholder="e.g., 2019">
+          </div>
+
+          <div class="form-group">
+            <label>Engine Type</label>
+            <input type="text" id="vehicleEngine" placeholder="e.g., Twin Mercury Verado 400HP">
+          </div>
+
+          <div class="form-group">
+            <label>Hull/VIN Number</label>
+            <input type="text" id="vehicleHullVin" placeholder="e.g., GW00012345">
+          </div>
+
+          <div class="form-group">
+            <label>Concerns (comma-separated)</label>
+            <textarea id="vehicleConcerns" placeholder="e.g., Saltwater corrosion, Winterization, Fuel stabilization"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="vehicleNotes" placeholder="Additional notes about this vehicle..."></textarea>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+            <button type="submit" class="btn btn-primary">Save Vehicle</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 2: Document Upload -->
+      <div id="vehicleStep2Document" class="vehicle-wizard-step" style="display: none;">
+        <h2>Add Vehicle - Upload Document</h2>
+        <p style="color: var(--stone); margin-bottom: 1.5rem;">Upload a clear photo or PDF of your vehicle's title, registration, or nameplate. AI will extract the details.</p>
+        
+        <div class="upload-area" onclick="document.getElementById('vehicleDocumentInput').click()" style="margin-bottom: 1.5rem;">
+          <p>📁 Click to upload document or photo</p>
+          <small>(PDF, JPG, PNG - clear images work best)</small>
+          <input type="file" id="vehicleDocumentInput" accept=".pdf,.jpg,.jpeg,.png" onchange="handleVehicleDocumentUpload(event)">
+        </div>
+
+        <div id="documentPreview" style="display: none; margin-bottom: 1.5rem;">
+          <p style="font-weight: 600; color: var(--water); margin-bottom: 0.5rem;">Document uploaded:</p>
+          <div id="documentFileName" style="color: var(--stone); font-size: 0.9rem;"></div>
+        </div>
+
+        <div id="extractionStatus" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: var(--foam); border-radius: 8px; border-left: 3px solid var(--accent);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="spinner"></span>
+            <span>Extracting vehicle details from document...</span>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+          <button type="button" class="btn btn-primary" id="processDocumentBtn" onclick="processVehicleDocument()" style="display: none;">Extract Details</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Photo Scan -->
+      <div id="vehicleStep2Photo" class="vehicle-wizard-step" style="display: none;">
+        <h2>Add Vehicle - Photo Scan</h2>
+        <p style="color: var(--stone); margin-bottom: 1.5rem;">Take a clear photo of your vehicle's nameplate, sticker, or registration. AI will identify the make, model, and year.</p>
+        
+        <div class="upload-area" onclick="document.getElementById('vehiclePhotoInput').click()" style="margin-bottom: 1.5rem;">
+          <p>📸 Click to take or upload photo</p>
+          <small>(JPG, PNG - good lighting recommended)</small>
+          <input type="file" id="vehiclePhotoInput" accept="image/*" onchange="handleVehiclePhotoUpload(event)">
+        </div>
+
+        <div id="photoPreview" style="display: none; margin-bottom: 1.5rem;">
+          <p style="font-weight: 600; color: var(--water); margin-bottom: 0.5rem;">Photo uploaded:</p>
+          <img id="photoThumbnail" src="" style="max-width: 100%; height: auto; border-radius: 8px;">
+        </div>
+
+        <div id="photoExtractionStatus" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: var(--foam); border-radius: 8px; border-left: 3px solid var(--accent);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="spinner"></span>
+            <span>Analyzing photo to identify vehicle...</span>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+          <button type="button" class="btn btn-primary" id="processPhotoBtn" onclick="processVehiclePhoto()" style="display: none;">Extract Details</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Verification (shared for all methods) -->
+      <div id="vehicleStep3Verify" class="vehicle-wizard-step" style="display: none;">
+        <h2>Verify Vehicle Details</h2>
+        <p style="color: var(--stone); margin-bottom: 1.5rem;">Review the extracted details below. Edit anything that's not quite right.</p>
+        
+        <form onsubmit="saveVehicleVerified(event)">
+          <div class="form-group">
+            <label>Vehicle Name *</label>
+            <input type="text" id="verifyVehicleName" required>
+          </div>
+
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select id="verifyVehicleType" required>
+              <option value="">Select type...</option>
+              <option value="boat">⛵ Boat</option>
+              <option value="snowmobile">🏂 Snowmobile</option>
+              <option value="jet_ski">🚤 Jet Ski</option>
+              <option value="boat_lift">⬆️ Boat Lift</option>
+              <option value="truck">🚛 Truck</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Make</label>
+            <input type="text" id="verifyVehicleMake">
+          </div>
+
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="verifyVehicleModel">
+          </div>
+
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" id="verifyVehicleYear">
+          </div>
+
+          <div class="form-group">
+            <label>Engine Type</label>
+            <input type="text" id="verifyVehicleEngine">
+          </div>
+
+          <div class="form-group">
+            <label>Hull/VIN Number</label>
+            <input type="text" id="verifyVehicleHullVin">
+          </div>
+
+          <div class="form-group">
+            <label>Concerns (comma-separated)</label>
+            <textarea id="verifyVehicleConcerns"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="verifyVehicleNotes"></textarea>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+            <button type="submit" class="btn btn-primary">Confirm & Save Vehicle</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -1134,18 +1341,52 @@
       event.target.classList.add('active');
     }
 
-    // Add Vehicle Modal
+    // State for vehicle wizard
+    let currentVehicleMethod = null;
+    let extractedVehicleData = null;
+    let vehicleDocumentFile = null;
+    let vehiclePhotoFile = null;
+
+    // Open Add Vehicle Modal
     function openAddVehicleModal() {
+      currentVehicleMethod = null;
+      extractedVehicleData = null;
+      vehicleDocumentFile = null;
+      vehiclePhotoFile = null;
+      showVehicleWizardStep('step1');
       document.getElementById('addVehicleModal').classList.add('active');
     }
 
     function closeAddVehicleModal(e) {
       if (!e || e.target.id === 'addVehicleModal') {
         document.getElementById('addVehicleModal').classList.remove('active');
+        currentVehicleMethod = null;
+        extractedVehicleData = null;
       }
     }
 
-    async function saveVehicle(e) {
+    // Wizard navigation
+    function selectVehicleMethod(method) {
+      currentVehicleMethod = method;
+      showVehicleWizardStep(method === 'manual' ? 'step2manual' : method === 'document' ? 'step2document' : 'step2photo');
+    }
+
+    function backToVehicleMethod() {
+      currentVehicleMethod = null;
+      extractedVehicleData = null;
+      showVehicleWizardStep('step1');
+    }
+
+    function showVehicleWizardStep(step) {
+      const steps = ['step1', 'step2manual', 'step2document', 'step2photo', 'step3verify'];
+      steps.forEach(s => {
+        const el = document.getElementById('vehicleStep' + (s === 'step1' ? '1' : s === 'step2manual' ? '2Manual' : s === 'step2document' ? '2Document' : s === 'step2photo' ? '2Photo' : '3Verify'));
+        if (el) el.style.display = s === step ? 'block' : 'none';
+      });
+    }
+
+    // Manual Entry - Direct Save
+    async function saveVehicleManual(e) {
       e.preventDefault();
       const vehicle = {
         id: genId(),
@@ -1169,6 +1410,172 @@
       } catch (err) {
         alert('Error saving vehicle: ' + err.message);
       }
+    }
+
+    // Document Upload Handler
+    function handleVehicleDocumentUpload(event) {
+      vehicleDocumentFile = event.target.files[0];
+      if (!vehicleDocumentFile) return;
+
+      document.getElementById('documentFileName').textContent = vehicleDocumentFile.name;
+      document.getElementById('documentPreview').style.display = 'block';
+      document.getElementById('processDocumentBtn').style.display = 'block';
+    }
+
+    async function processVehicleDocument() {
+      if (!vehicleDocumentFile) return;
+
+      document.getElementById('extractionStatus').style.display = 'block';
+      document.getElementById('processDocumentBtn').style.display = 'none';
+
+      try {
+        // Convert file to base64
+        const base64 = await fileToBase64(vehicleDocumentFile);
+        const mediaType = vehicleDocumentFile.type === 'application/pdf' ? 'application/pdf' : 'image/jpeg';
+
+        // Call Claude API to extract vehicle details
+        extractedVehicleData = await extractVehicleDataFromDocument(base64, mediaType);
+
+        // Populate verification form
+        document.getElementById('verifyVehicleName').value = extractedVehicleData.name || '';
+        document.getElementById('verifyVehicleType').value = extractedVehicleData.type || '';
+        document.getElementById('verifyVehicleMake').value = extractedVehicleData.make || '';
+        document.getElementById('verifyVehicleModel').value = extractedVehicleData.model || '';
+        document.getElementById('verifyVehicleYear').value = extractedVehicleData.year || '';
+        document.getElementById('verifyVehicleEngine').value = extractedVehicleData.engine_type || '';
+        document.getElementById('verifyVehicleHullVin').value = extractedVehicleData.hull_vin || '';
+        document.getElementById('verifyVehicleConcerns').value = extractedVehicleData.concerns ? extractedVehicleData.concerns.join(', ') : '';
+        document.getElementById('verifyVehicleNotes').value = extractedVehicleData.notes || '';
+
+        document.getElementById('extractionStatus').style.display = 'none';
+        showVehicleWizardStep('step3verify');
+      } catch (err) {
+        document.getElementById('extractionStatus').style.display = 'none';
+        document.getElementById('processDocumentBtn').style.display = 'block';
+        alert('Error extracting vehicle details: ' + err.message);
+      }
+    }
+
+    // Photo Upload Handler
+    function handleVehiclePhotoUpload(event) {
+      vehiclePhotoFile = event.target.files[0];
+      if (!vehiclePhotoFile) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('photoThumbnail').src = e.target.result;
+        document.getElementById('photoPreview').style.display = 'block';
+        document.getElementById('processPhotoBtn').style.display = 'block';
+      };
+      reader.readAsDataURL(vehiclePhotoFile);
+    }
+
+    async function processVehiclePhoto() {
+      if (!vehiclePhotoFile) return;
+
+      document.getElementById('photoExtractionStatus').style.display = 'block';
+      document.getElementById('processPhotoBtn').style.display = 'none';
+
+      try {
+        const base64 = await fileToBase64(vehiclePhotoFile);
+
+        // Call Claude API to identify vehicle from photo
+        extractedVehicleData = await extractVehicleDataFromPhoto(base64);
+
+        // Populate verification form
+        document.getElementById('verifyVehicleName').value = extractedVehicleData.name || '';
+        document.getElementById('verifyVehicleType').value = extractedVehicleData.type || '';
+        document.getElementById('verifyVehicleMake').value = extractedVehicleData.make || '';
+        document.getElementById('verifyVehicleModel').value = extractedVehicleData.model || '';
+        document.getElementById('verifyVehicleYear').value = extractedVehicleData.year || '';
+        document.getElementById('verifyVehicleEngine').value = extractedVehicleData.engine_type || '';
+        document.getElementById('verifyVehicleHullVin').value = extractedVehicleData.hull_vin || '';
+        document.getElementById('verifyVehicleConcerns').value = extractedVehicleData.concerns ? extractedVehicleData.concerns.join(', ') : '';
+        document.getElementById('verifyVehicleNotes').value = extractedVehicleData.notes || '';
+
+        document.getElementById('photoExtractionStatus').style.display = 'none';
+        showVehicleWizardStep('step3verify');
+      } catch (err) {
+        document.getElementById('photoExtractionStatus').style.display = 'none';
+        document.getElementById('processPhotoBtn').style.display = 'block';
+        alert('Error analyzing photo: ' + err.message);
+      }
+    }
+
+    // Verification and Save
+    async function saveVehicleVerified(e) {
+      e.preventDefault();
+      const vehicle = {
+        id: genId(),
+        name: document.getElementById('verifyVehicleName').value,
+        type: document.getElementById('verifyVehicleType').value,
+        make: document.getElementById('verifyVehicleMake').value,
+        model: document.getElementById('verifyVehicleModel').value,
+        year: document.getElementById('verifyVehicleYear').value ? parseInt(document.getElementById('verifyVehicleYear').value) : null,
+        engine_type: document.getElementById('verifyVehicleEngine').value,
+        hull_vin: document.getElementById('verifyVehicleHullVin').value,
+        notes: document.getElementById('verifyVehicleNotes').value,
+        specifications: {},
+        concerns: document.getElementById('verifyVehicleConcerns').value ? document.getElementById('verifyVehicleConcerns').value.split(',').map(c => c.trim()) : []
+      };
+
+      try {
+        await sbInsert('FleetVehicles', vehicle);
+        await loadVehicles();
+        populateVehicleSelects();
+        closeAddVehicleModal();
+      } catch (err) {
+        alert('Error saving vehicle: ' + err.message);
+      }
+    }
+
+    // Claude API Functions
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function extractVehicleDataFromDocument(base64Data, mediaType) {
+      const isImage = mediaType.startsWith('image');
+      
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: APP_ID,
+          method: 'CLAUDE_API',
+          claudeMethod: 'extractVehicleDocument',
+          base64Data: base64Data,
+          mediaType: mediaType
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'API error');
+
+      return data.result;
+    }
+
+    async function extractVehicleDataFromPhoto(base64Data) {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: APP_ID,
+          method: 'CLAUDE_API',
+          claudeMethod: 'extractVehiclePhoto',
+          base64Data: base64Data
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'API error');
+
+      return data.result;
     }
 
     // Maintenance Modal
