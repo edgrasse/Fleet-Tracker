@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admiral Grasse's Fleet Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --water: #2D5F8D;
+      --sand: #E8D5C4;
+      --dock: #8B6F47;
+      --foam: #F5F1ED;
+      --accent: #D4844A;
+      --wave: #4A7BA7;
+      --stone: #6B7280;
+      --dark: #1A2332;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, var(--foam) 0%, #f0ebe5 100%);
+      color: var(--dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Header with water texture */
+    .header {
+      background: linear-gradient(180deg, var(--water) 0%, var(--wave) 100%);
+      color: var(--foam);
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(45, 95, 141, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '≈ ≈ ≈';
+      position: absolute;
+      bottom: 0.5rem;
+      left: 0;
+      right: 0;
+      font-size: 1.5rem;
+      opacity: 0.2;
+      letter-spacing: 2rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    /* Main container */
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* Navigation tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      background: var(--foam);
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-tabs button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: white;
+      color: var(--stone);
+      cursor: pointer;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .nav-tabs button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(212, 132, 74, 0.2);
+    }
+
+    .nav-tabs button.active {
+      background: var(--water);
+      color: var(--foam);
+      border-color: var(--accent);
+    }
+
+    /* Section visibility */
+    .section {
+      display: none;
+      animation: fadeIn 0.4s ease-in;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Card styles */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid var(--accent);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--water);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .card-icon {
+      font-size: 1.75rem;
+      opacity: 0.8;
+    }
+
+    /* Grid layout for vehicles */
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .vehicle-card {
+      background: linear-gradient(135deg, var(--foam) 0%, white 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 2px solid var(--sand);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .vehicle-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--water), var(--accent), var(--wave));
+    }
+
+    .vehicle-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(45, 95, 141, 0.15);
+      border-color: var(--accent);
+    }
+
+    .vehicle-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--water);
+      margin-bottom: 0.75rem;
+    }
+
+    .vehicle-type {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .vehicle-details {
+      font-size: 0.9rem;
+      color: var(--stone);
+      line-height: 1.6;
+    }
+
+    .vehicle-details strong {
+      color: var(--water);
+    }
+
+    .vehicle-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--sand);
+    }
+
+    .vehicle-actions button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      background: var(--water);
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .vehicle-actions button:hover {
+      background: var(--wave);
+      transform: scale(1.02);
+    }
+
+    /* Form styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: var(--water);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--sand);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(212, 132, 74, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--water);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--wave);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(45, 95, 141, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #C4703B;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: #E74C3C;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #C0392B;
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* Upload area */
+    .upload-area {
+      border: 2px dashed var(--sand);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      background: var(--foam);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
+    }
+
+    .upload-area:hover {
+      border-color: var(--accent);
+      background: rgba(212, 132, 74, 0.05);
+    }
+
+    .upload-area p {
+      color: var(--stone);
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-area strong {
+      color: var(--water);
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* Documents list */
+    .document-item {
+      background: var(--foam);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 3px solid var(--accent);
+    }
+
+    .document-info {
+      flex: 1;
+    }
+
+    .document-info strong {
+      color: var(--water);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .document-info small {
+      color: var(--stone);
+    }
+
+    .document-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .document-actions button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: var(--water);
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .document-actions button:hover {
+      background: var(--wave);
+    }
+
+    /* Maintenance log */
+    .log-entry {
+      background: var(--foam);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent);
+    }
+
+    .log-entry-date {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--water);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .log-entry-type {
+      display: inline-block;
+      background: var(--water);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .log-entry-text {
+      color: var(--stone);
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .log-entry-meta {
+      font-size: 0.85rem;
+      color: var(--stone);
+      opacity: 0.75;
+    }
+
+    /* AI Advisor */
+    .advisor-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .chat-messages {
+      background: var(--foam);
+      border-radius: 12px;
+      padding: 1.5rem;
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      border: 2px solid var(--sand);
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .message.user {
+      background: var(--water);
+      color: white;
+      margin-left: 2rem;
+    }
+
+    .message.assistant {
+      background: white;
+      color: var(--dark);
+      margin-right: 2rem;
+      border-left: 3px solid var(--accent);
+    }
+
+    .message strong {
+      display: block;
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-bottom: 0.25rem;
+    }
+
+    .chat-input-group {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .chat-input-group input {
+      flex: 1;
+    }
+
+    .chat-input-group button {
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input-group button:hover {
+      background: #C4703B;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      color: var(--water);
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      justify-content: flex-end;
+    }
+
+    /* Share feature */
+    .share-section {
+      background: linear-gradient(135deg, var(--accent), #C4703B);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .share-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .share-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .share-option {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+    }
+
+    .share-option:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: white;
+    }
+
+    .share-option input[type="radio"] {
+      margin-right: 0.5rem;
+    }
+
+    .share-token-display {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      font-family: monospace;
+      word-break: break-all;
+      font-size: 0.85rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .vehicle-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-tabs {
+        flex-direction: column;
+      }
+
+      .nav-tabs button {
+        width: 100%;
+      }
+
+      .share-options {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-messages {
+        height: 300px;
+      }
+    }
+
+    /* Loading state */
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid var(--sand);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--stone);
+    }
+
+    .empty-state p {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Checklist styles */
+    .checklist-item {
+      background: var(--foam);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .checklist-item input[type="checkbox"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+      margin-top: 0.25rem;
+      accent-color: var(--accent);
+    }
+
+    .checklist-item-text {
+      flex: 1;
+    }
+
+    .checklist-item-text strong {
+      color: var(--water);
+      display: block;
+    }
+
+    .checklist-item-text small {
+      color: var(--stone);
+    }
+
+    .checklist-item.completed .checklist-item-text strong {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    /* Vehicle Method Buttons */
+    .vehicle-method-button {
+      padding: 1.5rem;
+      border: 2px solid var(--sand);
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .vehicle-method-button:hover {
+      border-color: var(--accent);
+      background: var(--foam);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(212, 132, 74, 0.2);
+    }
+
+    .vehicle-method-button strong {
+      font-size: 1.1rem;
+      color: var(--water);
+      display: block;
+    }
+
+    .vehicle-method-button small {
+      font-size: 0.85rem;
+      color: var(--stone);
+      display: block;
+    }
+
+    /* Vehicle Wizard Steps */
+    .vehicle-wizard-step {
+      animation: fadeIn 0.4s ease-in;
+    }
+
+    .vehicle-wizard-step h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      color: var(--water);
+      margin-bottom: 1rem;
+    }
+
+    .vehicle-wizard-step p {
+      margin-bottom: 1.5rem;
+    }
+</head>
+<body>
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+    }
+  </script>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>⚓ Admiral Grasse's Fleet Manager</h1>
+    <p>Track, maintain, and manage your entire fleet</p>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="active" onclick="showSection('vehicles')">🚤 Vehicles</button>
+      <button onclick="showSection('maintenance')">🔧 Maintenance</button>
+      <button onclick="showSection('documents')">📄 Documents</button>
+      <button onclick="showSection('checklists')">☑️ Checklists</button>
+      <button onclick="showSection('advisor')">🤖 AI Advisor</button>
+      <button onclick="showSection('settings')">⚙️ Settings</button>
+    </div>
+
+    <!-- 1. Vehicles Section -->
+    <div id="vehicles" class="section active">
+      <div class="card">
+        <h3><span class="card-icon">🚤</span> Fleet Vehicles</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--stone);">Add and manage your boats, snowmobiles, and other watercraft.</p>
+        <button class="btn btn-primary" onclick="openAddVehicleModal()">+ Add Vehicle</button>
+      </div>
+
+      <div id="vehicleGrid" class="vehicle-grid"></div>
+    </div>
+
+    <!-- 2. Maintenance Section -->
+    <div id="maintenance" class="section">
+      <div class="card">
+        <h3><span class="card-icon">🔧</span> Maintenance Log</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--stone);">Track maintenance history and service schedules.</p>
+        <button class="btn btn-primary" onclick="openAddMaintenanceModal()">+ Add Entry</button>
+      </div>
+
+      <div id="maintenanceList" class="card">
+        <div class="empty-state">
+          <p>Select a vehicle to view its maintenance history.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Documents Section -->
+    <div id="documents" class="section">
+      <div class="card">
+        <h3><span class="card-icon">📄</span> Documents</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--stone);">Upload manuals, receipts, and vehicle information documents.</p>
+        
+        <div id="vehicleSelect" style="margin-bottom: 1.5rem;">
+          <label>Select Vehicle</label>
+          <select id="docVehicleSelect" onchange="loadDocumentsForVehicle()">
+            <option value="">Choose a vehicle...</option>
+          </select>
+        </div>
+
+        <div id="uploadSection" style="display:none;">
+          <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p>📁 Drop documents here or click to browse</p>
+            <small>(PDFs, manuals, receipts)</small>
+            <input type="file" id="fileInput" multiple accept=".pdf" onchange="handleFileSelect(event)">
+          </div>
+
+          <div id="documentsList" class="card"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Checklists Section -->
+    <div id="checklists" class="section">
+      <div class="card">
+        <h3><span class="card-icon">☑️</span> Seasonal Checklists</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--stone);">AI-generated checklists, customized for each vehicle type.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <label>Select Vehicle</label>
+          <select id="checklistVehicleSelect" onchange="loadChecklists()">
+            <option value="">Choose a vehicle...</option>
+          </select>
+        </div>
+
+        <div id="checklistsContainer"></div>
+      </div>
+    </div>
+
+    <!-- 5. AI Advisor Section -->
+    <div id="advisor" class="section">
+      <div class="card">
+        <h3><span class="card-icon">🤖</span> AI Fleet Advisor</h3>
+        <p style="margin-bottom: 1rem; color: var(--stone);">Ask questions about your vehicles. The AI reads your manuals and maintenance history to help.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <label>Select Vehicle</label>
+          <select id="advisorVehicleSelect" onchange="loadAdvisorContext()">
+            <option value="">Choose a vehicle...</option>
+          </select>
+        </div>
+
+        <div id="advisorSection" style="display:none;">
+          <div class="advisor-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-group">
+              <input type="text" id="advisorInput" placeholder="Ask about maintenance, how-tos, specifications..." onkeypress="handleAdvisorKeypress(event)">
+              <button onclick="sendAdvisorMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Settings Section -->
+    <div id="settings" class="section">
+      <div class="card">
+        <h3><span class="card-icon">⚙️</span> Share Fleet Access</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--stone);">Generate shareable read-only links so others can view your fleet.</p>
+        
+        <div class="share-section">
+          <h3>Generate Share Link</h3>
+          
+          <div class="share-options">
+            <label class="share-option">
+              <input type="radio" name="expiry" value="never" checked> Never Expires
+            </label>
+            <label class="share-option">
+              <input type="radio" name="expiry" value="30days"> 30 Days
+            </label>
+            <label class="share-option">
+              <input type="radio" name="expiry" value="60days"> 60 Days
+            </label>
+            <label class="share-option">
+              <input type="radio" name="expiry" value="90days"> 90 Days
+            </label>
+          </div>
+
+          <button class="btn btn-secondary" onclick="generateShareLink()" style="width: 100%; background: white; color: var(--accent); margin-bottom: 1rem;">Generate Link</button>
+          
+          <div id="shareTokenDisplay" style="display: none;">
+            <p style="color: white; margin-bottom: 0.5rem;"><strong>Share this link:</strong></p>
+            <div class="share-token-display" id="shareTokenText"></div>
+            <button class="btn btn-secondary" onclick="copyShareLink()" style="width: 100%; margin-top: 1rem; background: white; color: var(--accent);">Copy to Clipboard</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="card-icon">ℹ️</span> About</h3>
+        <p style="color: var(--stone); line-height: 1.8;">
+          <strong>Admiral Grasse's Fleet Manager</strong><br>
+          A comprehensive vehicle and watercraft management system.<br><br>
+          <strong>Features:</strong><br>
+          • Vehicle profiles with dynamic specifications<br>
+          • Multi-file document uploads (manuals, receipts)<br>
+          • Flexible maintenance logging<br>
+          • AI-powered seasonal checklists<br>
+          • Smart AI advisor for maintenance and troubleshooting<br>
+          • Service interval tracking<br>
+          • Secure share links with view-only access
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Vehicle Modal - Step 1: Choose Method -->
+  <div id="addVehicleModal" class="modal" onclick="closeAddVehicleModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
+      <!-- Step 1: Choose Method -->
+      <div id="vehicleStep1" class="vehicle-wizard-step">
+        <h2>Add New Vehicle</h2>
+        <p style="color: var(--stone); margin-bottom: 2rem;">Choose how you'd like to add this vehicle to your fleet.</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <button type="button" class="vehicle-method-button" onclick="selectVehicleMethod('manual')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">✍️</div>
+            <strong>Manual Entry</strong>
+            <small>Type in vehicle details</small>
+          </button>
+          
+          <button type="button" class="vehicle-method-button" onclick="selectVehicleMethod('document')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+            <strong>Upload Document</strong>
+            <small>Scan title, registration, or manual (AI extracts details)</small>
+          </button>
+          
+          <button type="button" class="vehicle-method-button" onclick="selectVehicleMethod('photo')">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📸</div>
+            <strong>Photo Scan</strong>
+            <small>Take photo of vehicle nameplate/sticker (AI identifies details)</small>
+          </button>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" onclick="closeAddVehicleModal()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Manual Entry -->
+      <div id="vehicleStep2Manual" class="vehicle-wizard-step" style="display: none;">
+        <h2>Add Vehicle - Manual Entry</h2>
+        <form onsubmit="saveVehicleManual(event)">
+          <div class="form-group">
+            <label>Vehicle Name *</label>
+            <input type="text" id="vehicleName" required placeholder="e.g., Grady White 30">
+          </div>
+
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select id="vehicleType" required>
+              <option value="">Select type...</option>
+              <option value="boat">⛵ Boat</option>
+              <option value="snowmobile">🏂 Snowmobile</option>
+              <option value="jet_ski">🚤 Jet Ski</option>
+              <option value="boat_lift">⬆️ Boat Lift</option>
+              <option value="truck">🚛 Truck</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Make</label>
+            <input type="text" id="vehicleMake" placeholder="e.g., Grady-White">
+          </div>
+
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="vehicleModel" placeholder="e.g., 30 Express">
+          </div>
+
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" id="vehicleYear" placeholder="e.g., 2019">
+          </div>
+
+          <div class="form-group">
+            <label>Engine Type</label>
+            <input type="text" id="vehicleEngine" placeholder="e.g., Twin Mercury Verado 400HP">
+          </div>
+
+          <div class="form-group">
+            <label>Hull/VIN Number</label>
+            <input type="text" id="vehicleHullVin" placeholder="e.g., GW00012345">
+          </div>
+
+          <div class="form-group">
+            <label>Concerns (comma-separated)</label>
+            <textarea id="vehicleConcerns" placeholder="e.g., Saltwater corrosion, Winterization, Fuel stabilization"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="vehicleNotes" placeholder="Additional notes about this vehicle..."></textarea>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+            <button type="submit" class="btn btn-primary">Save Vehicle</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 2: Document Upload -->
+      <div id="vehicleStep2Document" class="vehicle-wizard-step" style="display: none;">
+        <h2>Add Vehicle - Upload Document</h2>
+        <p style="color: var(--stone); margin-bottom: 1.5rem;">Upload a clear photo or PDF of your vehicle's title, registration, or nameplate. AI will extract the details.</p>
+        
+        <div class="upload-area" onclick="document.getElementById('vehicleDocumentInput').click()" style="margin-bottom: 1.5rem;">
+          <p>📁 Click to upload document or photo</p>
+          <small>(PDF, JPG, PNG - clear images work best)</small>
+          <input type="file" id="vehicleDocumentInput" accept=".pdf,.jpg,.jpeg,.png" onchange="handleVehicleDocumentUpload(event)">
+        </div>
+
+        <div id="documentPreview" style="display: none; margin-bottom: 1.5rem;">
+          <p style="font-weight: 600; color: var(--water); margin-bottom: 0.5rem;">Document uploaded:</p>
+          <div id="documentFileName" style="color: var(--stone); font-size: 0.9rem;"></div>
+        </div>
+
+        <div id="extractionStatus" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: var(--foam); border-radius: 8px; border-left: 3px solid var(--accent);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="spinner"></span>
+            <span>Extracting vehicle details from document...</span>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+          <button type="button" class="btn btn-primary" id="processDocumentBtn" onclick="processVehicleDocument()" style="display: none;">Extract Details</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Photo Scan -->
+      <div id="vehicleStep2Photo" class="vehicle-wizard-step" style="display: none;">
+        <h2>Add Vehicle - Photo Scan</h2>
+        <p style="color: var(--stone); margin-bottom: 1.5rem;">Take a clear photo of your vehicle's nameplate, sticker, or registration. AI will identify the make, model, and year.</p>
+        
+        <div class="upload-area" onclick="document.getElementById('vehiclePhotoInput').click()" style="margin-bottom: 1.5rem;">
+          <p>📸 Click to take or upload photo</p>
+          <small>(JPG, PNG - good lighting recommended)</small>
+          <input type="file" id="vehiclePhotoInput" accept="image/*" onchange="handleVehiclePhotoUpload(event)">
+        </div>
+
+        <div id="photoPreview" style="display: none; margin-bottom: 1.5rem;">
+          <p style="font-weight: 600; color: var(--water); margin-bottom: 0.5rem;">Photo uploaded:</p>
+          <img id="photoThumbnail" src="" style="max-width: 100%; height: auto; border-radius: 8px;">
+        </div>
+
+        <div id="photoExtractionStatus" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: var(--foam); border-radius: 8px; border-left: 3px solid var(--accent);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="spinner"></span>
+            <span>Analyzing photo to identify vehicle...</span>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+          <button type="button" class="btn btn-primary" id="processPhotoBtn" onclick="processVehiclePhoto()" style="display: none;">Extract Details</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Verification (shared for all methods) -->
+      <div id="vehicleStep3Verify" class="vehicle-wizard-step" style="display: none;">
+        <h2>Verify Vehicle Details</h2>
+        <p style="color: var(--stone); margin-bottom: 1.5rem;">Review the extracted details below. Edit anything that's not quite right.</p>
+        
+        <form onsubmit="saveVehicleVerified(event)">
+          <div class="form-group">
+            <label>Vehicle Name *</label>
+            <input type="text" id="verifyVehicleName" required>
+          </div>
+
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select id="verifyVehicleType" required>
+              <option value="">Select type...</option>
+              <option value="boat">⛵ Boat</option>
+              <option value="snowmobile">🏂 Snowmobile</option>
+              <option value="jet_ski">🚤 Jet Ski</option>
+              <option value="boat_lift">⬆️ Boat Lift</option>
+              <option value="truck">🚛 Truck</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Make</label>
+            <input type="text" id="verifyVehicleMake">
+          </div>
+
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="verifyVehicleModel">
+          </div>
+
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" id="verifyVehicleYear">
+          </div>
+
+          <div class="form-group">
+            <label>Engine Type</label>
+            <input type="text" id="verifyVehicleEngine">
+          </div>
+
+          <div class="form-group">
+            <label>Hull/VIN Number</label>
+            <input type="text" id="verifyVehicleHullVin">
+          </div>
+
+          <div class="form-group">
+            <label>Concerns (comma-separated)</label>
+            <textarea id="verifyVehicleConcerns"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="verifyVehicleNotes"></textarea>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="backToVehicleMethod()">Back</button>
+            <button type="submit" class="btn btn-primary">Confirm & Save Vehicle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Maintenance Modal -->
+  <div id="addMaintenanceModal" class="modal" onclick="closeAddMaintenanceModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h2>Add Maintenance Entry</h2>
+      <form onsubmit="saveMaintenanceEntry(event)">
+        <div class="form-group">
+          <label>Vehicle *</label>
+          <select id="maintenanceVehicle" required>
+            <option value="">Select vehicle...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Maintenance Type *</label>
+          <select id="maintenanceType" required>
+            <option value="">Select type...</option>
+            <option value="oil_change">Oil Change</option>
+            <option value="winterization">Winterization</option>
+            <option value="commissioning">Spring Commissioning</option>
+            <option value="inspection">Inspection</option>
+            <option value="repair">Repair</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Specific Date (optional)</label>
+          <input type="date" id="maintenanceDate">
+        </div>
+
+        <div class="form-group">
+          <label>Season & Year (if no date above)</label>
+          <input type="text" id="maintenanceSeasonYear" placeholder="e.g., Fall 2024">
+        </div>
+
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="maintenanceDescription" required placeholder="What was done..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Cost</label>
+          <input type="number" id="maintenanceCost" step="0.01" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label>Completed By</label>
+          <input type="text" id="maintenanceCompletedBy" placeholder="Your name or technician">
+        </div>
+
+        <div class="form-group">
+          <label>Hours Logged (on vehicle)</label>
+          <input type="number" id="maintenanceHours" step="0.1">
+        </div>
+
+        <div class="form-group">
+          <label>Miles Logged (on vehicle)</label>
+          <input type="number" id="maintenanceMiles" step="0.1">
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" onclick="closeAddMaintenanceModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script>
+    // Configuration
+    const WORKER_URL = 'https://grasse-apps-proxy.ed-53c.workers.dev';
+    const APP_ID = 'fleet';
+    
+    // State
+    let vehicles = [];
+    let selectedVehicleId = null;
+    let currentChat = [];
+    let isReadOnlyMode = false;
+
+    // Helper: Generate unique ID
+    function genId() {
+      return Math.random().toString(36).substr(2, 9);
+    }
+
+    // Worker communication
+    async function workerCall(payload) {
+      const r = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId: APP_ID, ...payload })
+      });
+      if (!r.ok) throw new Error('Worker error: ' + r.status);
+      return r.json();
+    }
+
+    // Supabase helper functions
+    async function sbGet(table, filters) {
+      return workerCall({ method: 'SELECT', table, filters: filters || '' });
+    }
+
+    async function sbInsert(table, row) {
+      return workerCall({ method: 'INSERT', table, data: row });
+    }
+
+    async function sbUpdate(table, id, row, idField) {
+      return workerCall({ method: 'UPDATE', table, data: row, idField: idField || 'id', idValue: id });
+    }
+
+    async function sbDelete(table, id, idField) {
+      return workerCall({ method: 'DELETE', table, idField: idField || 'id', idValue: id });
+    }
+
+    async function sbUpsert(table, row, onConflict) {
+      return workerCall({ method: 'UPSERT', table, data: row, filters: onConflict || '' });
+    }
+
+    // Initialize
+    async function init() {
+      await loadVehicles();
+      populateVehicleSelects();
+    }
+
+    // Load vehicles
+    async function loadVehicles() {
+      try {
+        const data = await sbGet('FleetVehicles', 'order=name.asc');
+        vehicles = data;
+        renderVehicles();
+      } catch (err) {
+        console.error('Error loading vehicles:', err);
+      }
+    }
+
+    // Render vehicles
+    function renderVehicles() {
+      const grid = document.getElementById('vehicleGrid');
+      if (vehicles.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><p>No vehicles yet. Add your first vehicle to get started!</p></div>';
+        return;
+      }
+
+      grid.innerHTML = vehicles.map(v => `
+        <div class="vehicle-card" onclick="selectVehicle('${v.id}')">
+          <span class="vehicle-type">${v.type.toUpperCase()}</span>
+          <h4>${v.name}</h4>
+          <div class="vehicle-details">
+            ${v.make ? `<strong>Make:</strong> ${v.make}<br>` : ''}
+            ${v.model ? `<strong>Model:</strong> ${v.model}<br>` : ''}
+            ${v.year ? `<strong>Year:</strong> ${v.year}<br>` : ''}
+            ${v.engine_type ? `<strong>Engine:</strong> ${v.engine_type}` : ''}
+          </div>
+          <div class="vehicle-actions">
+            <button onclick="event.stopPropagation(); viewVehicleDetails('${v.id}')">View</button>
+            ${!isReadOnlyMode ? `<button onclick="event.stopPropagation(); editVehicle('${v.id}')">Edit</button>` : ''}
+            ${!isReadOnlyMode ? `<button onclick="event.stopPropagation(); deleteVehicle('${v.id}')" style="background: #E74C3C;">Delete</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Select vehicle
+    function selectVehicle(vehicleId) {
+      selectedVehicleId = vehicleId;
+    }
+
+    // Populate vehicle selects
+    function populateVehicleSelects() {
+      const selects = ['docVehicleSelect', 'checklistVehicleSelect', 'advisorVehicleSelect', 'maintenanceVehicle'];
+      const options = '<option value="">Choose a vehicle...</option>' + vehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+      selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+      });
+    }
+
+    // Section navigation
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // State for vehicle wizard
+    let currentVehicleMethod = null;
+    let extractedVehicleData = null;
+    let vehicleDocumentFile = null;
+    let vehiclePhotoFile = null;
+
+    // Open Add Vehicle Modal
+    function openAddVehicleModal() {
+      currentVehicleMethod = null;
+      extractedVehicleData = null;
+      vehicleDocumentFile = null;
+      vehiclePhotoFile = null;
+      showVehicleWizardStep('step1');
+      document.getElementById('addVehicleModal').classList.add('active');
+    }
+
+    function closeAddVehicleModal(e) {
+      if (!e || e.target.id === 'addVehicleModal') {
+        document.getElementById('addVehicleModal').classList.remove('active');
+        currentVehicleMethod = null;
+        extractedVehicleData = null;
+      }
+    }
+
+    // Wizard navigation
+    function selectVehicleMethod(method) {
+      currentVehicleMethod = method;
+      showVehicleWizardStep(method === 'manual' ? 'step2manual' : method === 'document' ? 'step2document' : 'step2photo');
+    }
+
+    function backToVehicleMethod() {
+      currentVehicleMethod = null;
+      extractedVehicleData = null;
+      showVehicleWizardStep('step1');
+    }
+
+    function showVehicleWizardStep(step) {
+      const steps = ['step1', 'step2manual', 'step2document', 'step2photo', 'step3verify'];
+      steps.forEach(s => {
+        const el = document.getElementById('vehicleStep' + (s === 'step1' ? '1' : s === 'step2manual' ? '2Manual' : s === 'step2document' ? '2Document' : s === 'step2photo' ? '2Photo' : '3Verify'));
+        if (el) el.style.display = s === step ? 'block' : 'none';
+      });
+    }
+
+    // Manual Entry - Direct Save
+    async function saveVehicleManual(e) {
+      e.preventDefault();
+      const vehicle = {
+        id: genId(),
+        name: document.getElementById('vehicleName').value,
+        type: document.getElementById('vehicleType').value,
+        make: document.getElementById('vehicleMake').value,
+        model: document.getElementById('vehicleModel').value,
+        year: document.getElementById('vehicleYear').value ? parseInt(document.getElementById('vehicleYear').value) : null,
+        engine_type: document.getElementById('vehicleEngine').value,
+        hull_vin: document.getElementById('vehicleHullVin').value,
+        notes: document.getElementById('vehicleNotes').value,
+        specifications: {},
+        concerns: document.getElementById('vehicleConcerns').value ? document.getElementById('vehicleConcerns').value.split(',').map(c => c.trim()) : []
+      };
+
+      try {
+        await sbInsert('FleetVehicles', vehicle);
+        await loadVehicles();
+        populateVehicleSelects();
+        closeAddVehicleModal();
+      } catch (err) {
+        alert('Error saving vehicle: ' + err.message);
+      }
+    }
+
+    // Document Upload Handler
+    function handleVehicleDocumentUpload(event) {
+      vehicleDocumentFile = event.target.files[0];
+      if (!vehicleDocumentFile) return;
+
+      document.getElementById('documentFileName').textContent = vehicleDocumentFile.name;
+      document.getElementById('documentPreview').style.display = 'block';
+      document.getElementById('processDocumentBtn').style.display = 'block';
+    }
+
+    async function processVehicleDocument() {
+      if (!vehicleDocumentFile) return;
+
+      document.getElementById('extractionStatus').style.display = 'block';
+      document.getElementById('processDocumentBtn').style.display = 'none';
+
+      try {
+        // Convert file to base64
+        const base64 = await fileToBase64(vehicleDocumentFile);
+        const mediaType = vehicleDocumentFile.type === 'application/pdf' ? 'application/pdf' : 'image/jpeg';
+
+        // Call Claude API to extract vehicle details
+        extractedVehicleData = await extractVehicleDataFromDocument(base64, mediaType);
+
+        // Populate verification form
+        document.getElementById('verifyVehicleName').value = extractedVehicleData.name || '';
+        document.getElementById('verifyVehicleType').value = extractedVehicleData.type || '';
+        document.getElementById('verifyVehicleMake').value = extractedVehicleData.make || '';
+        document.getElementById('verifyVehicleModel').value = extractedVehicleData.model || '';
+        document.getElementById('verifyVehicleYear').value = extractedVehicleData.year || '';
+        document.getElementById('verifyVehicleEngine').value = extractedVehicleData.engine_type || '';
+        document.getElementById('verifyVehicleHullVin').value = extractedVehicleData.hull_vin || '';
+        document.getElementById('verifyVehicleConcerns').value = extractedVehicleData.concerns ? extractedVehicleData.concerns.join(', ') : '';
+        document.getElementById('verifyVehicleNotes').value = extractedVehicleData.notes || '';
+
+        document.getElementById('extractionStatus').style.display = 'none';
+        showVehicleWizardStep('step3verify');
+      } catch (err) {
+        document.getElementById('extractionStatus').style.display = 'none';
+        document.getElementById('processDocumentBtn').style.display = 'block';
+        alert('Error extracting vehicle details: ' + err.message);
+      }
+    }
+
+    // Photo Upload Handler
+    function handleVehiclePhotoUpload(event) {
+      vehiclePhotoFile = event.target.files[0];
+      if (!vehiclePhotoFile) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('photoThumbnail').src = e.target.result;
+        document.getElementById('photoPreview').style.display = 'block';
+        document.getElementById('processPhotoBtn').style.display = 'block';
+      };
+      reader.readAsDataURL(vehiclePhotoFile);
+    }
+
+    async function processVehiclePhoto() {
+      if (!vehiclePhotoFile) return;
+
+      document.getElementById('photoExtractionStatus').style.display = 'block';
+      document.getElementById('processPhotoBtn').style.display = 'none';
+
+      try {
+        const base64 = await fileToBase64(vehiclePhotoFile);
+
+        // Call Claude API to identify vehicle from photo
+        extractedVehicleData = await extractVehicleDataFromPhoto(base64);
+
+        // Populate verification form
+        document.getElementById('verifyVehicleName').value = extractedVehicleData.name || '';
+        document.getElementById('verifyVehicleType').value = extractedVehicleData.type || '';
+        document.getElementById('verifyVehicleMake').value = extractedVehicleData.make || '';
+        document.getElementById('verifyVehicleModel').value = extractedVehicleData.model || '';
+        document.getElementById('verifyVehicleYear').value = extractedVehicleData.year || '';
+        document.getElementById('verifyVehicleEngine').value = extractedVehicleData.engine_type || '';
+        document.getElementById('verifyVehicleHullVin').value = extractedVehicleData.hull_vin || '';
+        document.getElementById('verifyVehicleConcerns').value = extractedVehicleData.concerns ? extractedVehicleData.concerns.join(', ') : '';
+        document.getElementById('verifyVehicleNotes').value = extractedVehicleData.notes || '';
+
+        document.getElementById('photoExtractionStatus').style.display = 'none';
+        showVehicleWizardStep('step3verify');
+      } catch (err) {
+        document.getElementById('photoExtractionStatus').style.display = 'none';
+        document.getElementById('processPhotoBtn').style.display = 'block';
+        alert('Error analyzing photo: ' + err.message);
+      }
+    }
+
+    // Verification and Save
+    async function saveVehicleVerified(e) {
+      e.preventDefault();
+      const vehicle = {
+        id: genId(),
+        name: document.getElementById('verifyVehicleName').value,
+        type: document.getElementById('verifyVehicleType').value,
+        make: document.getElementById('verifyVehicleMake').value,
+        model: document.getElementById('verifyVehicleModel').value,
+        year: document.getElementById('verifyVehicleYear').value ? parseInt(document.getElementById('verifyVehicleYear').value) : null,
+        engine_type: document.getElementById('verifyVehicleEngine').value,
+        hull_vin: document.getElementById('verifyVehicleHullVin').value,
+        notes: document.getElementById('verifyVehicleNotes').value,
+        specifications: {},
+        concerns: document.getElementById('verifyVehicleConcerns').value ? document.getElementById('verifyVehicleConcerns').value.split(',').map(c => c.trim()) : []
+      };
+
+      try {
+        await sbInsert('FleetVehicles', vehicle);
+        await loadVehicles();
+        populateVehicleSelects();
+        closeAddVehicleModal();
+      } catch (err) {
+        alert('Error saving vehicle: ' + err.message);
+      }
+    }
+
+    // Claude API Functions
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function extractVehicleDataFromDocument(base64Data, mediaType) {
+      const isImage = mediaType.startsWith('image');
+      
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: APP_ID,
+          method: 'CLAUDE_API',
+          claudeMethod: 'extractVehicleDocument',
+          base64Data: base64Data,
+          mediaType: mediaType
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'API error');
+
+      return data.result;
+    }
+
+    async function extractVehicleDataFromPhoto(base64Data) {
+      const response = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appId: APP_ID,
+          method: 'CLAUDE_API',
+          claudeMethod: 'extractVehiclePhoto',
+          base64Data: base64Data
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'API error');
+
+      return data.result;
+    }
+
+    // Maintenance Modal
+    function openAddMaintenanceModal() {
+      document.getElementById('addMaintenanceModal').classList.add('active');
+    }
+
+    function closeAddMaintenanceModal(e) {
+      if (!e || e.target.id === 'addMaintenanceModal') {
+        document.getElementById('addMaintenanceModal').classList.remove('active');
+      }
+    }
+
+    async function saveMaintenanceEntry(e) {
+      e.preventDefault();
+      const entry = {
+        id: genId(),
+        vehicle_id: document.getElementById('maintenanceVehicle').value,
+        maintenance_type: document.getElementById('maintenanceType').value,
+        date: document.getElementById('maintenanceDate').value || null,
+        season_year: document.getElementById('maintenanceSeasonYear').value || null,
+        description: document.getElementById('maintenanceDescription').value,
+        cost: document.getElementById('maintenanceCost').value ? parseFloat(document.getElementById('maintenanceCost').value) : null,
+        completed_by: document.getElementById('maintenanceCompletedBy').value,
+        hours_logged: document.getElementById('maintenanceHours').value ? parseFloat(document.getElementById('maintenanceHours').value) : null,
+        miles_logged: document.getElementById('maintenanceMiles').value ? parseFloat(document.getElementById('maintenanceMiles').value) : null
+      };
+
+      try {
+        await sbInsert('FleetMaintenanceLog', entry);
+        if (selectedVehicleId === entry.vehicle_id) {
+          await loadMaintenanceForVehicle(selectedVehicleId);
+        }
+        closeAddMaintenanceModal();
+      } catch (err) {
+        alert('Error saving maintenance: ' + err.message);
+      }
+    }
+
+    // Document upload
+    function handleFileSelect(event) {
+      const files = event.target.files;
+      if (!selectedVehicleId && !document.getElementById('docVehicleSelect').value) {
+        alert('Please select a vehicle first');
+        return;
+      }
+      // TODO: Implement file upload to Supabase Storage
+      alert('File upload to come - will integrate Supabase Storage');
+    }
+
+    async function loadDocumentsForVehicle() {
+      const vehicleId = document.getElementById('docVehicleSelect').value;
+      if (!vehicleId) {
+        document.getElementById('uploadSection').style.display = 'none';
+        return;
+      }
+      document.getElementById('uploadSection').style.display = 'block';
+      try {
+        const docs = await sbGet('FleetDocuments', `vehicle_id=eq.${vehicleId}&order=uploaded_date.desc`);
+        const list = document.getElementById('documentsList');
+        if (docs.length === 0) {
+          list.innerHTML = '<div class="empty-state"><p>No documents yet. Upload PDFs to get started.</p></div>';
+        } else {
+          list.innerHTML = docs.map(doc => `
+            <div class="document-item">
+              <div class="document-info">
+                <strong>${doc.file_name}</strong>
+                <small>${doc.document_type} • ${new Date(doc.uploaded_date).toLocaleDateString()}</small>
+              </div>
+              <div class="document-actions">
+                <button onclick="viewDocument('${doc.file_url}')">View</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading documents:', err);
+      }
+    }
+
+    // Load maintenance log
+    async function loadMaintenanceForVehicle(vehicleId) {
+      try {
+        const entries = await sbGet('FleetMaintenanceLog', `vehicle_id=eq.${vehicleId}&order=date.desc,season_year.desc`);
+        const list = document.getElementById('maintenanceList');
+        if (entries.length === 0) {
+          list.innerHTML = '<div class="empty-state"><p>No maintenance entries yet.</p></div>';
+        } else {
+          list.innerHTML = '<h3 style="font-family: \'Playfair Display\', serif; font-size: 1.3rem; color: var(--water); margin-bottom: 1rem;">Maintenance History</h3>' + entries.map(e => `
+            <div class="log-entry">
+              <div class="log-entry-date">${e.date ? new Date(e.date).toLocaleDateString() : e.season_year || 'Undated'}</div>
+              <span class="log-entry-type">${e.maintenance_type}</span>
+              <div class="log-entry-text"><strong>${e.description}</strong></div>
+              ${e.cost ? `<div class="log-entry-meta">Cost: $${e.cost}</div>` : ''}
+              ${e.completed_by ? `<div class="log-entry-meta">By: ${e.completed_by}</div>` : ''}
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading maintenance:', err);
+      }
+    }
+
+    // Checklists
+    async function loadChecklists() {
+      const vehicleId = document.getElementById('checklistVehicleSelect').value;
+      if (!vehicleId) {
+        document.getElementById('checklistsContainer').innerHTML = '';
+        return;
+      }
+      try {
+        const checklists = await sbGet('FleetChecklists', `vehicle_id=eq.${vehicleId}&order=season.asc`);
+        const container = document.getElementById('checklistsContainer');
+        if (checklists.length === 0) {
+          container.innerHTML = '<div class="empty-state"><p>No checklists yet. Generate AI checklists for this vehicle.</p></div>';
+        } else {
+          container.innerHTML = checklists.map(cl => `
+            <div class="card">
+              <h4 style="font-family: 'Playfair Display', serif; color: var(--water); margin-bottom: 1rem;">${cl.season.charAt(0).toUpperCase() + cl.season.slice(1)} Checklist</h4>
+              <div>${cl.checklist_items.map((item, idx) => `
+                <div class="checklist-item ${item.completed ? 'completed' : ''}">
+                  <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="updateChecklistItem('${cl.id}', ${idx}, this.checked)">
+                  <div class="checklist-item-text">
+                    <strong>${item.item_text}</strong>
+                    ${item.notes ? `<small>${item.notes}</small>` : ''}
+                  </div>
+                </div>
+              `).join('')}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading checklists:', err);
+      }
+    }
+
+    // AI Advisor
+    async function loadAdvisorContext() {
+      const vehicleId = document.getElementById('advisorVehicleSelect').value;
+      if (!vehicleId) {
+        document.getElementById('advisorSection').style.display = 'none';
+        return;
+      }
+      document.getElementById('advisorSection').style.display = 'block';
+      document.getElementById('chatMessages').innerHTML = '';
+      currentChat = [];
+    }
+
+    function handleAdvisorKeypress(e) {
+      if (e.key === 'Enter') {
+        sendAdvisorMessage();
+      }
+    }
+
+    async function sendAdvisorMessage() {
+      const input = document.getElementById('advisorInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Add user message to chat
+      const messages = document.getElementById('chatMessages');
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.innerHTML = `<strong>You</strong>${message}`;
+      messages.appendChild(userMsg);
+      messages.scrollTop = messages.scrollHeight;
+
+      input.value = '';
+
+      // TODO: Call Claude API with vehicle context and uploaded documents
+      const assistantMsg = document.createElement('div');
+      assistantMsg.className = 'message assistant';
+      assistantMsg.innerHTML = `<strong>Fleet Advisor</strong>I can help with that! This feature will integrate with Claude to read your manuals and maintenance history.`;
+      messages.appendChild(assistantMsg);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Share feature
+    async function generateShareLink() {
+      const expiry = document.querySelector('input[name="expiry"]:checked').value;
+      const token = genId() + genId();
+      
+      let expiresAt = null;
+      if (expiry !== 'never') {
+        const days = expiry === '30days' ? 30 : expiry === '60days' ? 60 : 90;
+        expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      try {
+        await sbInsert('FleetShareTokens', {
+          id: genId(),
+          token: token,
+          expires_at: expiresAt,
+          access_level: 'view',
+          created_by: 'User'
+        });
+
+        const shareUrl = window.location.origin + window.location.pathname + `?token=${token}`;
+        document.getElementById('shareTokenText').textContent = shareUrl;
+        document.getElementById('shareTokenDisplay').style.display = 'block';
+      } catch (err) {
+        alert('Error generating share link: ' + err.message);
+      }
+    }
+
+    function copyShareLink() {
+      const text = document.getElementById('shareTokenText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Link copied to clipboard!');
+      });
+    }
+
+    // Initialize on page load
+    init();
+  </script>
+</body>
+</html>
