@@ -1278,8 +1278,13 @@
 
     // Initialize
     async function init() {
-      await loadVehicles();
-      populateVehicleSelects();
+      try {
+        await loadVehicles();
+        populateVehicleSelects();
+      } catch (err) {
+        console.error('Failed to load vehicles, but page will still display:', err);
+        // Page still displays even if data loading fails
+      }
     }
 
     // Load vehicles
