@@ -255,6 +255,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 6, 2026 — 9:45 PM</p>
 </div>
 
 <div class="container">
@@ -1522,9 +1523,18 @@ Give practical, specific advice. Be concise but thorough. Reference the maintena
   // ============================================================
   loadVehicles();
 
-  // Register service worker
+  // Register service worker — force reload when new version is detected
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            window.location.reload();
+          }
+        });
+      });
+    }).catch(() => {});
   }
 </script>
 </body>
