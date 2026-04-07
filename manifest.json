@@ -1,0 +1,24 @@
+{
+  "name": "Admiral Grasse's Fleet Manager",
+  "short_name": "Fleet Manager",
+  "description": "Track, maintain, and manage your entire fleet",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2D5F8D",
+  "theme_color": "#2D5F8D",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
