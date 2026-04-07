@@ -255,7 +255,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 6, 2026 — 9:45 PM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 6, 2026 — 10:15 PM</p>
 </div>
 
 <div class="container">
@@ -655,6 +655,66 @@
   </div>
 </div>
 
+<!-- ============================================================ -->
+<!-- EDIT VEHICLE MODAL -->
+<!-- ============================================================ -->
+<div id="editVehicleModal" class="modal" onclick="closeModalByBg(event,'editVehicleModal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2>Edit Vehicle</h2>
+    <input type="hidden" id="editVehicleId">
+    <div class="two-col">
+      <div class="form-group">
+        <label>Vehicle Name *</label>
+        <input type="text" id="editVehicleName" placeholder="e.g., Grady White 30">
+      </div>
+      <div class="form-group">
+        <label>Vehicle Type *</label>
+        <select id="editVehicleType">
+          <option value="">Select type...</option>
+          <option value="boat">&#9925; Boat</option>
+          <option value="snowmobile">&#127938; Snowmobile</option>
+          <option value="jet_ski">&#128676; Jet Ski</option>
+          <option value="boat_lift">&#11014; Boat Lift</option>
+          <option value="truck">&#128667; Truck</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Make</label>
+        <input type="text" id="editVehicleMake" placeholder="e.g., Sea Ray">
+      </div>
+      <div class="form-group">
+        <label>Model</label>
+        <input type="text" id="editVehicleModel" placeholder="e.g., 240 Bow Runner">
+      </div>
+      <div class="form-group">
+        <label>Year</label>
+        <input type="number" id="editVehicleYear" placeholder="e.g., 2005">
+      </div>
+      <div class="form-group">
+        <label>Engine Type</label>
+        <input type="text" id="editVehicleEngine" placeholder="e.g., MerCruiser 5.0L">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Hull/VIN Number</label>
+      <input type="text" id="editVehicleHullVin" placeholder="e.g., SERV5243C292">
+    </div>
+    <div class="form-group">
+      <label>Concerns (comma-separated)</label>
+      <textarea id="editVehicleConcerns" style="min-height:60px" placeholder="e.g., Saltwater corrosion, Winterization"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="editVehicleNotes" style="min-height:60px" placeholder="Additional notes..."></textarea>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" onclick="closeModal('editVehicleModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVehicleEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast notification -->
 <div id="toast" class="toast"></div>
 
@@ -815,7 +875,8 @@
           ${v.hull_vin ? `<strong>Hull/VIN:</strong> ${v.hull_vin}` : ''}
         </div>
         ${v.concerns && v.concerns.length ? `<div style="font-size:0.8rem;color:var(--accent);margin-top:0.5rem;">⚠️ ${Array.isArray(v.concerns) ? v.concerns.join(', ') : v.concerns}</div>` : ''}
-        <div style="margin-top:1rem;text-align:right;">
+        <div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button class="btn btn-primary" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();openEditVehicleModal('${v.id}')">✏️ Edit</button>
           <button class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();deleteVehicle('${v.id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑 Delete</button>
         </div>
       </div>
@@ -827,6 +888,52 @@
     sbDelete('FleetVehicles', id)
       .then(() => { showToast(`${name} deleted.`); loadVehicles(); })
       .catch(err => showToast('Delete failed: ' + err.message, 'error'));
+  }
+
+  function openEditVehicleModal(id) {
+    const v = vehicles.find(v => v.id === id);
+    if (!v) return;
+    document.getElementById('editVehicleId').value = v.id;
+    document.getElementById('editVehicleName').value = v.name || '';
+    document.getElementById('editVehicleType').value = v.type || '';
+    document.getElementById('editVehicleMake').value = v.make || '';
+    document.getElementById('editVehicleModel').value = v.model || '';
+    document.getElementById('editVehicleYear').value = v.year || '';
+    document.getElementById('editVehicleEngine').value = v.engine_type || '';
+    document.getElementById('editVehicleHullVin').value = v.hull_vin || '';
+    document.getElementById('editVehicleNotes').value = v.notes || '';
+    const concerns = Array.isArray(v.concerns) ? v.concerns.join(', ') : (v.concerns || '');
+    document.getElementById('editVehicleConcerns').value = concerns;
+    document.getElementById('editVehicleModal').classList.add('active');
+  }
+
+  function saveVehicleEdit() {
+    const id = document.getElementById('editVehicleId').value;
+    const name = document.getElementById('editVehicleName').value.trim();
+    const type = document.getElementById('editVehicleType').value;
+    if (!name || !type) { showToast('Vehicle name and type are required.', 'error'); return; }
+
+    const updates = {
+      name,
+      type,
+      make: document.getElementById('editVehicleMake').value.trim() || null,
+      model: document.getElementById('editVehicleModel').value.trim() || null,
+      year: document.getElementById('editVehicleYear').value ? parseInt(document.getElementById('editVehicleYear').value) : null,
+      engine_type: document.getElementById('editVehicleEngine').value.trim() || null,
+      hull_vin: document.getElementById('editVehicleHullVin').value.trim() || null,
+      notes: document.getElementById('editVehicleNotes').value.trim() || null,
+      concerns: document.getElementById('editVehicleConcerns').value
+        ? document.getElementById('editVehicleConcerns').value.split(',').map(c => c.trim()).filter(Boolean)
+        : []
+    };
+
+    sbUpdate('FleetVehicles', id, updates)
+      .then(() => {
+        closeModal('editVehicleModal');
+        showToast('Vehicle updated!');
+        loadVehicles();
+      })
+      .catch(err => showToast('Update failed: ' + err.message, 'error'));
   }
 
   function populateVehicleSelects() {
