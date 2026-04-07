@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 6, 2026 — 11:30 PM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 12:30 AM</p>
 </div>
 
 <div class="container">
@@ -1078,13 +1078,47 @@
   // ============================================================
   // ADD VEHICLE MODAL
   // ============================================================
+  function resetAddVehicleModal() {
+    // Hide all step panels
+    document.getElementById('vehicleStep1').style.display = 'block';
+    ['vehicleStep2Manual', 'vehicleStep2Document', 'vehicleStep2Photo', 'vehicleStep2OneDrive'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    // Clear file inputs so the same file can be re-selected
+    document.getElementById('vehicleDocumentInput').value = '';
+    document.getElementById('vehiclePhotoInput').value = '';
+    // Hide and clear all AI result/processing panels
+    document.getElementById('vehicleDocProcessing').style.display = 'none';
+    document.getElementById('vehicleDocResult').style.display = 'none';
+    document.getElementById('vehicleDocResult').innerHTML = '';
+    document.getElementById('docUploadArea').style.display = 'block';
+    document.getElementById('vehiclePhotoProcessing').style.display = 'none';
+    document.getElementById('vehiclePhotoResult').style.display = 'none';
+    document.getElementById('vehiclePhotoResult').innerHTML = '';
+    document.getElementById('vehicleOneDriveProcessing').style.display = 'none';
+    document.getElementById('vehicleOneDriveResult').style.display = 'none';
+    document.getElementById('vehicleOneDriveResult').innerHTML = '';
+    document.getElementById('oneDrivePickerContainer').style.display = 'block';
+    // Clear manual form fields
+    ['vehicleName','vehicleMake','vehicleModel','vehicleYear','vehicleEngine','vehicleHullVin','vehicleConcerns','vehicleNotes'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('vehicleType').value = '';
+    const customType = document.getElementById('vehicleTypeCustom');
+    if (customType) { customType.value = ''; customType.style.display = 'none'; }
+  }
+
   function openAddVehicleModal() {
-    backToVehicleStep1();
+    resetAddVehicleModal();
     document.getElementById('addVehicleModal').classList.add('active');
   }
 
   function closeAddVehicleModal(e) {
-    if (!e || e.target.id === 'addVehicleModal') closeModal('addVehicleModal');
+    if (!e || e.target.id === 'addVehicleModal') {
+      closeModal('addVehicleModal');
+      resetAddVehicleModal();
+    }
   }
 
   function selectVehicleMethod(method) {
@@ -1096,10 +1130,7 @@
   }
 
   function backToVehicleStep1() {
-    document.getElementById('vehicleStep1').style.display = 'block';
-    ['vehicleStep2Manual', 'vehicleStep2Document', 'vehicleStep2Photo', 'vehicleStep2OneDrive'].forEach(id => {
-      document.getElementById(id).style.display = 'none';
-    });
+    resetAddVehicleModal();
   }
 
   function saveVehicleManual() {
@@ -1122,7 +1153,7 @@
     };
 
     sbInsert('FleetVehicles', vehicle)
-      .then(() => { loadVehicles(); closeModal('addVehicleModal'); showToast('Vehicle saved!'); })
+      .then(() => { loadVehicles(); closeModal('addVehicleModal'); resetAddVehicleModal(); showToast('Vehicle saved!'); })
       .catch(err => showToast('Error saving: ' + err.message, 'error'));
   }
 
@@ -1223,7 +1254,7 @@
     };
 
     sbInsert('FleetVehicles', vehicle)
-      .then(() => { loadVehicles(); closeModal('addVehicleModal'); showToast('Vehicle saved from scan!'); })
+      .then(() => { loadVehicles(); closeModal('addVehicleModal'); resetAddVehicleModal(); showToast('Vehicle saved from scan!'); })
       .catch(err => showToast('Error saving: ' + err.message, 'error'));
   }
 
