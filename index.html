@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 10:45 PM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 11:15 PM</p>
 </div>
 
 <div class="container">
@@ -952,7 +952,8 @@
           ${v.hull_vin ? `<strong>Hull/VIN:</strong> ${v.hull_vin}` : ''}
         </div>
         ${v.concerns && v.concerns.length ? `<div style="font-size:0.8rem;color:var(--accent);margin-top:0.5rem;">⚠️ ${Array.isArray(v.concerns) ? v.concerns.join(', ') : v.concerns}</div>` : ''}
-        <div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+        <div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;background:var(--wave);" onclick="event.stopPropagation();openVehicleOneDrivePicker('${v.id}','${(v.name||'').replace(/'/g,"\\'")}')">☁️ Docs</button>
           <button class="btn btn-primary" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();openEditVehicleModal('${v.id}')">✏️ Edit</button>
           <button class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();deleteVehicle('${v.id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑 Delete</button>
         </div>
@@ -1631,48 +1632,88 @@
 
 
   // ============================================================
-  // ONEDRIVE PICKER
+  // ONEDRIVE PICKER — unified implementation
   // ============================================================
-  function openOneDrivePicker() {
-    const vehicleId = document.getElementById('docVehicleSelect').value;
-    if (!vehicleId) { showToast('Select a vehicle first.', 'error'); return; }
+  // openOneDrivePicker(context, vehicleId) 
+  //   context: 'vehicle' = add vehicle flow, 'document' = docs tab, 'card' = from vehicle card
+  //   vehicleId: required for 'card' and 'document' contexts
 
+  let _odVehicleId = null; // vehicle ID for card/document context
+
+  function openVehicleOneDrivePicker(vehicleId, vehicleName) {
+    // Called from vehicle card ☁️ Docs button
+    _odVehicleId = vehicleId;
+    _openOneDriveSDK('card');
+  }
+
+  function openOneDrivePicker(context) {
+    if (context === 'document') {
+      _odVehicleId = document.getElementById('docVehicleSelect').value;
+      if (!_odVehicleId) { showToast('Select a vehicle first.', 'error'); return; }
+    } else if (context === 'vehicle') {
+      _odVehicleId = null; // no vehicle yet — will be created from AI extraction
+    }
+    _openOneDriveSDK(context);
+  }
+
+  function _openOneDriveSDK(context) {
     const odOptions = {
-      clientId: 'YOUR_ONEDRIVE_CLIENT_ID', // placeholder — set up in next session
+      clientId: ONEDRIVE_CLIENT_ID,
       action: 'download',
-      multiSelect: false,
+      multiSelect: context === 'card', // allow multi-select when adding docs from card
       openInNewWindow: true,
-      advanced: { filter: '.pdf,.doc,.docx,.jpg,.png' },
+      advanced: {
+        filter: '.pdf,.jpg,.jpeg,.png,.doc,.docx',
+        redirectUri: window.location.href.split('?')[0]
+      },
       success: function(files) {
-        const file = files.value[0];
-        if (!file) return;
-        const doc = {
-          id: genId(),
-          vehicle_id: vehicleId,
-          file_name: file.name,
-          file_url: file['@microsoft.graph.downloadUrl'] || file.webUrl,
-          document_type: 'manual',
-          file_size_bytes: file.size || null,
-          uploaded_by: 'onedrive',
-          extracted_data: { source: 'onedrive', onedrive_id: file.id }
-        };
-        sbInsert('FleetDocuments', doc)
-          .then(() => { showToast(file.name + ' linked from OneDrive!'); loadDocumentsForVehicle(); })
-          .catch(err => showToast('Error saving: ' + err.message, 'error'));
+        const fileList = files.value || [];
+        if (!fileList.length) return;
+        if (context === 'vehicle') {
+          handleOneDriveVehicleFile(fileList[0]);
+        } else {
+          // card or document context — save all selected files as linked documents
+          saveOneDriveDocuments(fileList, _odVehicleId);
+        }
       },
       cancel: function() {},
-      error: function(err) { showToast('OneDrive error: ' + err.message, 'error'); }
+      error: function(e) { showToast('OneDrive error: ' + (e.message || 'Could not open picker'), 'error'); }
     };
 
-    // Load OneDrive SDK if not already loaded
     if (typeof OneDrive === 'undefined') {
       const script = document.createElement('script');
       script.src = 'https://js.live.net/v7.2/OneDrive.js';
       script.onload = () => OneDrive.open(odOptions);
-      script.onerror = () => showToast('Could not load OneDrive. You may need to configure the client ID first.', 'error');
+      script.onerror = () => showToast('Could not load OneDrive SDK.', 'error');
       document.head.appendChild(script);
     } else {
       OneDrive.open(odOptions);
+    }
+  }
+
+  async function saveOneDriveDocuments(files, vehicleId) {
+    if (!vehicleId) { showToast('No vehicle selected.', 'error'); return; }
+    let saved = 0;
+    for (const file of files) {
+      const doc = {
+        id: genId(),
+        vehicle_id: vehicleId,
+        file_name: file.name,
+        file_url: file['@microsoft.graph.downloadUrl'] || file.webUrl,
+        document_type: file.name.toLowerCase().endsWith('.pdf') ? 'manual' : 'vehicle_info',
+        file_size_bytes: file.size || null,
+        extracted_data: { source: 'onedrive', notes: 'Linked from OneDrive' }
+      };
+      try {
+        await sbInsert('FleetDocuments', doc);
+        saved++;
+      } catch (err) {
+        showToast('Error saving ' + file.name + ': ' + err.message, 'error');
+      }
+    }
+    if (saved > 0) {
+      showToast(saved === 1 ? files[0].name + ' linked!' : saved + ' files linked from OneDrive!');
+      loadDocumentsForVehicle(); // refresh docs tab if open
     }
   }
 
@@ -2005,139 +2046,8 @@ Give practical, specific advice. Be concise but thorough. Reference the maintena
   // Microsoft OneDrive file picker via SDK
   // Docs: https://learn.microsoft.com/en-us/onedrive/developer/controls/file-pickers/js-v8/
 
-  let oneDrivePickerTarget = 'vehicle'; // 'vehicle' or 'document'
 
-  function launchOneDrivePicker(target) {
-    oneDrivePickerTarget = target;
-
-    const odOptions = {
-      clientId: "YOUR_MICROSOFT_APP_CLIENT_ID", // ← Set this in a future session
-      action: "download",
-      multiSelect: false,
-      openInNewWindow: true,
-      advanced: {
-        filter: ".pdf,.jpg,.jpeg,.png",
-        redirectUri: window.location.href
-      },
-      success: function(files) {
-        handleOneDriveFile(files);
-      },
-      cancel: function() {
-        // User cancelled — nothing to do
-      },
-      error: function(e) {
-        showToast('OneDrive error: ' + (e.message || e), 'error');
-      }
-    };
-
-    // Check if OneDrive SDK is loaded
-    if (typeof OneDrive === 'undefined') {
-      showToast('OneDrive picker requires Microsoft app registration. See setup note.', 'error');
-      showOneDriveSetupNote();
-      return;
-    }
-
-    OneDrive.open(odOptions);
-  }
-
-  function showOneDriveSetupNote() {
-    const container = document.getElementById(
-      oneDrivePickerTarget === 'vehicle' ? 'oneDrivePickerContainer' : 'docOneDrivePickerContainer'
-    );
-    if (container) {
-      container.innerHTML = `
-        <div style="background:#fff8f0;border:2px solid var(--accent);border-radius:10px;padding:1.25rem;">
-          <p style="font-weight:700;color:var(--accent);margin-bottom:0.75rem;">⚙️ One-Time Setup Required</p>
-          <p style="font-size:0.9rem;color:var(--dark);line-height:1.6;margin-bottom:0.75rem;">
-            OneDrive access requires a free Microsoft Azure app registration to authorize this app.
-            This is a one-time 5-minute setup.
-          </p>
-          <p style="font-size:0.85rem;color:var(--stone);line-height:1.6;">
-            <strong>Next session:</strong> Claude will complete the Azure app registration and embed your Client ID into the app.
-            Once set up, this button will open your OneDrive directly.
-          </p>
-        </div>`;
-    }
-  }
-
-  async function handleOneDriveFile(files) {
-    if (!files || !files.value || !files.value.length) return;
-    const file = files.value[0];
-    const downloadUrl = file['@microsoft.graph.downloadUrl'] || file.downloadUrl;
-
-    if (!downloadUrl) {
-      showToast('Could not get download URL from OneDrive.', 'error');
-      return;
-    }
-
-    const processingId = oneDrivePickerTarget === 'vehicle' ? 'vehicleOneDriveProcessing' : 'docOneDriveProcessing';
-    const resultId = oneDrivePickerTarget === 'vehicle' ? 'vehicleOneDriveResult' : 'docOneDriveResult';
-    const containerId = oneDrivePickerTarget === 'vehicle' ? 'oneDrivePickerContainer' : 'docOneDrivePickerContainer';
-
-    document.getElementById(containerId).style.display = 'none';
-    document.getElementById(processingId).style.display = 'block';
-
-    try {
-      // Fetch the file via our Worker (avoids CORS issues)
-      const r = await fetch(WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          appId: APP_ID,
-          method: 'FETCH_URL',
-          url: downloadUrl
-        })
-      });
-      const data = await r.json();
-      if (data.error) throw new Error(data.error);
-
-      const base64Data = data.base64;
-      const mediaType = file.file?.mimeType || 'application/pdf';
-
-      if (oneDrivePickerTarget === 'vehicle') {
-        // Use same AI extraction as document upload
-        const aiR = await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            appId: APP_ID,
-            method: 'CLAUDE_API',
-            claudeMethod: 'extractVehicleDocument',
-            base64Data,
-            mediaType
-          })
-        });
-        const aiData = await aiR.json();
-        if (aiData.error) throw new Error(aiData.error);
-        document.getElementById(processingId).style.display = 'none';
-        document.getElementById(resultId).style.display = 'block';
-        showExtractedVehicleResult(aiData.result, resultId);
-      } else {
-        // Document tab — save as linked document
-        document.getElementById(processingId).style.display = 'none';
-        const vehicleId = document.getElementById('docVehicleSelect').value;
-        const doc = {
-          id: genId(),
-          vehicle_id: vehicleId,
-          file_name: file.name,
-          file_url: downloadUrl,
-          document_type: 'manual',
-          file_size_bytes: file.size || null,
-          extracted_data: { source: 'onedrive', onedrive_id: file.id }
-        };
-        await sbInsert('FleetDocuments', doc);
-        showToast(file.name + ' linked from OneDrive!');
-        loadDocumentsForVehicle();
-        closeModal('addDocOneDriveModal');
-      }
-    } catch (err) {
-      document.getElementById(processingId).style.display = 'none';
-      document.getElementById(containerId).style.display = 'block';
-      showToast('OneDrive import failed: ' + err.message, 'error');
-    }
-  }
-
-  // ============================================================
+    // ============================================================
   // INIT
   // ============================================================
   loadVehicles();
