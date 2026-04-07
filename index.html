@@ -814,8 +814,18 @@
           ${v.hull_vin ? `<strong>Hull/VIN:</strong> ${v.hull_vin}` : ''}
         </div>
         ${v.concerns && v.concerns.length ? `<div style="font-size:0.8rem;color:var(--accent);margin-top:0.5rem;">⚠️ ${Array.isArray(v.concerns) ? v.concerns.join(', ') : v.concerns}</div>` : ''}
+        <div style="margin-top:1rem;text-align:right;">
+          <button class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();deleteVehicle('${v.id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑 Delete</button>
+        </div>
       </div>
     `).join('');
+  }
+
+  function deleteVehicle(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    sbDelete('FleetVehicles', id)
+      .then(() => { showToast(`${name} deleted.`); loadVehicles(); })
+      .catch(err => showToast('Delete failed: ' + err.message, 'error'));
   }
 
   function populateVehicleSelects() {
