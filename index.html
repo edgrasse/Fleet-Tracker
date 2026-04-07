@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 12:30 AM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 10:45 PM</p>
 </div>
 
 <div class="container">
@@ -329,8 +329,7 @@
         <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 Upload File</button>
           <button class="btn btn-secondary" onclick="openAddUrlModal()">🔗 Link Online Manual</button>
-          <button class="btn btn-secondary" onclick="openOneDrivePicker('document')" style="background:var(--stone);">☁️ From OneDrive</button>
-          <button class="btn btn-secondary" onclick="openOneDrivePicker()" style="background:#0078d4;">☁️ From OneDrive</button>
+          <button class="btn btn-secondary" onclick="openOneDrivePicker('document')" style="background:var(--wave);">☁️ OneDrive</button>
         </div>
         <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="handleDocumentUpload(event)" style="display:none;">
       </div>
@@ -545,18 +544,18 @@
     <!-- Step 2d: OneDrive picker -->
     <div id="vehicleStep2OneDrive" style="display:none;">
       <p style="color:var(--stone);margin-bottom:1rem;">Select a file from OneDrive — AI will extract vehicle details from it.</p>
-      <div id="oneDrivePickerContainer">
-        <button class="btn btn-primary" style="width:100%;padding:1.5rem;font-size:1.1rem;margin-bottom:1rem;" onclick="launchOneDrivePicker('vehicle')">
+      <div id="oneDrivePickerArea">
+        <button class="btn btn-primary" style="width:100%;padding:1.5rem;font-size:1.1rem;margin-bottom:1rem;" onclick="openOneDrivePicker('vehicle')">
           ☁️ Open OneDrive File Picker
         </button>
         <p style="font-size:0.85rem;color:var(--stone);text-align:center;">Supports PDF, JPG, PNG — title, registration, manual cover</p>
       </div>
-      <div id="vehicleOneDriveProcessing" style="display:none;">
+      <div id="oneDriveVehicleProcessing" style="display:none;">
         <div class="ai-processing">
           <p><span class="spinner"></span> Downloading from OneDrive and reading with AI...</p>
         </div>
       </div>
-      <div id="vehicleOneDriveResult" style="display:none;"></div>
+      <div id="oneDriveVehicleResult" style="display:none;"></div>
       <div class="modal-buttons">
         <button class="btn btn-secondary" onclick="backToVehicleStep1()">Back</button>
       </div>
@@ -1095,10 +1094,10 @@
     document.getElementById('vehiclePhotoProcessing').style.display = 'none';
     document.getElementById('vehiclePhotoResult').style.display = 'none';
     document.getElementById('vehiclePhotoResult').innerHTML = '';
-    document.getElementById('vehicleOneDriveProcessing').style.display = 'none';
-    document.getElementById('vehicleOneDriveResult').style.display = 'none';
-    document.getElementById('vehicleOneDriveResult').innerHTML = '';
-    document.getElementById('oneDrivePickerContainer').style.display = 'block';
+    document.getElementById('oneDriveVehicleProcessing').style.display = 'none';
+    document.getElementById('oneDriveVehicleResult').style.display = 'none';
+    document.getElementById('oneDriveVehicleResult').innerHTML = '';
+    document.getElementById('oneDrivePickerArea').style.display = 'block';
     // Clear manual form fields
     ['vehicleName','vehicleMake','vehicleModel','vehicleYear','vehicleEngine','vehicleHullVin','vehicleConcerns','vehicleNotes'].forEach(id => {
       const el = document.getElementById(id);
@@ -1429,13 +1428,13 @@
   // ONEDRIVE PICKER
   // ============================================================
   // Microsoft OneDrive file picker SDK
-  const ONEDRIVE_CLIENT_ID = ''; // Set your Azure App Client ID here if registering an app
+  const ONEDRIVE_CLIENT_ID = '3037a9b3-4733-45a6-af61-486b67c0c99e';
   // We use the public picker approach which works without app registration for personal OneDrive
 
   function openOneDrivePicker(context) {
     // context: 'vehicle' = add vehicle flow, 'document' = add document flow
     const options = {
-      clientId: ONEDRIVE_CLIENT_ID || 'ab149d9a-4e4a-4e9f-ab4a-7f4c7b4c7777', // fallback public demo id
+      clientId: ONEDRIVE_CLIENT_ID,
       action: 'query',
       multiSelect: false,
       advanced: {
