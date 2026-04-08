@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 1:00 AM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 1:05 AM</p>
 </div>
 
 <div class="container">
@@ -861,6 +861,11 @@
   function typeLabel(type) {
     const map = { oil_change: 'Oil Change', winterization: 'Winterization', commissioning: 'Commissioning', inspection: 'Inspection', repair: 'Repair', other: 'Other' };
     return map[type] || type || 'Other';
+  }
+
+  function typeDisplayLabel(type) {
+    const map = { boat:'Boat', snowmobile:'Snowmobile', jet_ski:'Jet Ski', boat_lift:'Boat Lift', truck:'Truck', trailer:'Trailer', fish_finder:'Electronics', atv:'ATV/UTV' };
+    return map[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Vehicle');
   }
 
   function vehicleName(id) {
