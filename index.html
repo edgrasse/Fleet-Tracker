@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 11:55 PM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 12:30 AM</p>
 </div>
 
 <div class="container">
@@ -962,24 +962,23 @@
   // VEHICLES
   // ============================================================
   function loadVehicles() {
-    Promise.all([
-      sbGet('FleetVehicles', 'order=name.asc'),
-      sbGet('FleetConnections', '')
-    ]).then(([vData, cData]) => {
-      vehicles = vData || [];
-      connections = cData || [];
-      renderVehicles();
-      renderAccessories();
-      populateVehicleSelects();
-    }).catch(() => {
-      sbGet('FleetVehicles', 'order=name.asc').then(data => {
-        vehicles = data || [];
-        connections = [];
+    // Load vehicles first — always succeeds
+    sbGet('FleetVehicles', 'order=name.asc')
+      .then(data => {
+        vehicles = Array.isArray(data) ? data : [];
         renderVehicles();
         renderAccessories();
         populateVehicleSelects();
-      }).catch(() => { vehicles = []; renderVehicles(); });
-    });
+      })
+      .catch(() => { vehicles = []; renderVehicles(); });
+
+    // Load connections separately — table may not exist yet, fail silently
+    sbGet('FleetConnections', '')
+      .then(data => {
+        connections = Array.isArray(data) ? data : [];
+        renderAccessories(); // re-render accessories with connection info
+      })
+      .catch(() => { connections = []; }); // FleetConnections table not created yet — ignore
   }
 
   function vehicleCardHTML(v, showParent) {
@@ -1618,12 +1617,19 @@
   }
 
   // ============================================================
-  // ONEDRIVE PICKER — unified, popup mode (no openInNewWindow)
+  // ONEDRIVE PICKER v8 — MSAL + postMessage popup
   // ============================================================
-  const ONEDRIVE_CLIENT_ID = '3037a9b3-4733-45a6-af61-486b67c0c99e';
+  // Uses Microsoft File Picker v8 with MSAL.js for personal OneDrive
+  // Popup communicates back via postMessage — works on GitHub Pages
 
-  let _odContext = 'document'; // 'vehicle', 'document', 'card'
+  const ONEDRIVE_CLIENT_ID = '3037a9b3-4733-45a6-af61-486b67c0c99e';
+  const OD_BASE_URL = 'https://onedrive.live.com/picker';
+
+  let _odContext = 'document';
   let _odVehicleId = null;
+  let _odPort = null;
+  let _odWin = null;
+  let _msalApp = null;
 
   function openOneDrivePicker(context) {
     _odContext = context;
@@ -1633,50 +1639,168 @@
     } else if (context === 'vehicle') {
       _odVehicleId = null;
     }
-    _launchOneDrive();
+    _launchOneDriveV8();
   }
 
   function openVehicleOneDrivePicker(vehicleId, vehicleName) {
     _odContext = 'card';
     _odVehicleId = vehicleId;
-    _launchOneDrive();
+    _launchOneDriveV8();
   }
 
-  function _launchOneDrive() {
-    const odOptions = {
-      clientId: ONEDRIVE_CLIENT_ID,
-      action: 'download',
-      multiSelect: (_odContext === 'card' || _odContext === 'document'),
-      // NO openInNewWindow — runs as popup within same window
-      advanced: {
-        filter: '.pdf,.jpg,.jpeg,.png,.doc,.docx',
+  async function _getMsalApp() {
+    if (_msalApp) return _msalApp;
+    // Load MSAL if needed
+    if (typeof msal === 'undefined') {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    _msalApp = new msal.PublicClientApplication({
+      auth: {
+        clientId: ONEDRIVE_CLIENT_ID,
+        authority: 'https://login.microsoftonline.com/consumers',
         redirectUri: window.location.origin + window.location.pathname
       },
-      success: function(files) {
-        const fileList = files.value || [];
-        if (!fileList.length) return;
-        if (_odContext === 'vehicle') {
-          handleOneDriveVehicleFile(fileList[0]);
-        } else {
-          saveOneDriveDocuments(fileList, _odVehicleId);
-        }
-      },
-      cancel: function() {},
-      error: function(e) { showToast('OneDrive error: ' + (e.message || 'Could not open picker'), 'error'); }
-    };
+      cache: { cacheLocation: 'sessionStorage' }
+    });
+    await _msalApp.initialize();
+    return _msalApp;
+  }
 
-    if (typeof OneDrive === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://js.live.net/v7.2/OneDrive.js';
-      script.onload = () => OneDrive.open(odOptions);
-      script.onerror = () => showToast('Could not load OneDrive SDK. Check internet connection.', 'error');
-      document.head.appendChild(script);
-    } else {
-      OneDrive.open(odOptions);
+  async function _getOneDriveToken() {
+    const app = await _getMsalApp();
+    const scopes = ['OneDrive.ReadOnly'];
+    try {
+      const accounts = app.getAllAccounts();
+      if (accounts.length > 0) {
+        const resp = await app.acquireTokenSilent({ scopes, account: accounts[0] });
+        return resp.accessToken;
+      }
+    } catch (e) { /* fall through to popup */ }
+    const resp = await app.loginPopup({ scopes });
+    app.setActiveAccount(resp.account);
+    const resp2 = await app.acquireTokenSilent({ scopes, account: resp.account });
+    return resp2.accessToken;
+  }
+
+  async function _launchOneDriveV8() {
+    try {
+      showToast('Opening OneDrive...');
+      const token = await _getOneDriveToken();
+
+      const channelId = genId();
+      const params = {
+        sdk: '8.0',
+        entry: { oneDrive: { files: {} } },
+        authentication: {},
+        messaging: {
+          origin: window.location.origin,
+          channelId
+        },
+        typesAndSources: {
+          mode: 'files',
+          filters: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'],
+          pivots: { oneDrive: true, recent: true }
+        },
+        selection: { mode: _odContext === 'card' ? 'multiple' : 'single' }
+      };
+
+      const qs = new URLSearchParams({ filePicker: JSON.stringify(params), locale: 'en-us' });
+      const url = `${OD_BASE_URL}?${qs}`;
+
+      // Open popup
+      _odWin = window.open('', 'OneDrivePicker', 'width=1080,height=680,left=100,top=100');
+
+      // POST form to the picker URL with the access token
+      const form = _odWin.document.createElement('form');
+      form.setAttribute('action', url);
+      form.setAttribute('method', 'POST');
+      const input = _odWin.document.createElement('input');
+      input.setAttribute('type', 'hidden');
+      input.setAttribute('name', 'access_token');
+      input.setAttribute('value', token);
+      form.appendChild(input);
+      _odWin.document.body.appendChild(form);
+      form.submit();
+
+      // Listen for messages from the picker
+      window.addEventListener('message', _oneDriveMessageHandler);
+
+    } catch (err) {
+      showToast('OneDrive: ' + (err.message || 'Could not open picker'), 'error');
     }
   }
 
-    async function saveOneDriveDocuments(files, vehicleId) {
+  function _oneDriveMessageHandler(event) {
+    if (!event.source || event.source !== _odWin) return;
+
+    // Establish MessageChannel on first message
+    if (event.data?.type === 'initialize' && event.data?.channelId) {
+      const mc = new MessageChannel();
+      _odPort = mc.port1;
+      _odPort.addEventListener('message', _oneDrivePortMessage);
+      _odPort.start();
+      event.source.postMessage({ type: 'activate' }, '*', [mc.port2]);
+    }
+  }
+
+  async function _oneDrivePortMessage(event) {
+    const data = event.data;
+    if (!data) return;
+
+    switch (data.command) {
+      case 'authenticate': {
+        try {
+          const token = await _getOneDriveToken();
+          _odPort.postMessage({ type: 'result', id: data.id, data: { result: 'token', token } });
+        } catch (e) {
+          _odPort.postMessage({ type: 'result', id: data.id, data: { result: 'error', error: { code: 'authFailed', message: e.message } } });
+        }
+        break;
+      }
+      case 'pick': {
+        // User selected files
+        const items = data.items || [];
+        _odPort.postMessage({ type: 'result', id: data.id, data: { result: 'success' } });
+        window.removeEventListener('message', _oneDriveMessageHandler);
+        if (_odWin) { _odWin.close(); _odWin = null; }
+
+        if (items.length === 0) break;
+
+        if (_odContext === 'vehicle') {
+          // Build a file-like object for the existing handler
+          const item = items[0];
+          const file = {
+            name: item.name,
+            size: item.size,
+            webUrl: item.webUrl,
+            '@microsoft.graph.downloadUrl': item.webUrl
+          };
+          handleOneDriveVehicleFile(file);
+        } else {
+          const files = items.map(item => ({
+            name: item.name,
+            size: item.size,
+            webUrl: item.webUrl,
+            '@microsoft.graph.downloadUrl': item.webUrl
+          }));
+          saveOneDriveDocuments(files, _odVehicleId);
+        }
+        break;
+      }
+      case 'close':
+        window.removeEventListener('message', _oneDriveMessageHandler);
+        if (_odWin) { _odWin.close(); _odWin = null; }
+        break;
+    }
+  }
+
+  async function saveOneDriveDocuments(files, vehicleId) {
     if (!vehicleId) { showToast('No vehicle selected.', 'error'); return; }
     let saved = 0;
     for (const file of files) {
@@ -1697,12 +1821,12 @@
       }
     }
     if (saved > 0) {
-      showToast(saved === 1 ? files[0].name + ' linked!' : saved + ' files linked from OneDrive!');
-      loadDocumentsForVehicle(); // refresh docs tab if open
+      showToast(saved === 1 ? files[0].name + ' linked from OneDrive!' : saved + ' files linked from OneDrive!');
+      loadDocumentsForVehicle();
     }
   }
 
-  // ============================================================
+    // ============================================================
   // CHECKLISTS (AI-Generated)
   // ============================================================
   const SEASONS = [
