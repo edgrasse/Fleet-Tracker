@@ -1021,7 +1021,7 @@
       try {
         await sbInsert('FleetDocuments', {
           id: genId(), vehicle_id: vehicleId,
-          file_name: file.name, file_url: null,
+          file_name: file.name, file_url: '',  // no storage yet
           document_type: docType,
           file_size_bytes: file.size||null,
           extracted_data: extractedData
