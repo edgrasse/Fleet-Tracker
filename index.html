@@ -1511,7 +1511,7 @@
       const v=vehicles.find(v=>v.id===currentAdvisorVehicleId);
       const hist=maintenanceLog.filter(e=>e.vehicle_id===currentAdvisorVehicleId).slice(0,10).map(e=>'- '+(e.date||e.season_year||'?')+': '+maintTypeLabel(e.maintenance_type)+' — '+e.description).join('\n')||'None';
       const connectedItems=connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId).map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
-      const system='You are an expert marine and recreational vehicle mechanic.\nVehicle: '+(v?.name||'Unknown')+(v?.nickname?' (called "'+v.nickname+'")')+ '\nType: '+typeLabel(v?.type)+'\nMake/Model: '+([v?.make,v?.model].filter(Boolean).join(' ')||'Unknown')+'\nYear: '+(v?.year||'Unknown')+'\nEngine: '+(v?.engine_type||'Unknown')+'\nHull/VIN: '+(v?.hull_vin||'Unknown')+'\nNotes: '+(v?.notes||'None')+'\n\nMaintenance History:\n'+hist+(connectedItems.length?'\n\nConnected equipment:\n'+connectedItems.map(a=>'- '+displayName(a)+' ('+typeLabel(a.type)+')').join('\n'):'')+'\n\nGive practical, specific advice. Reference history when relevant. Flag safety concerns clearly.';
+      const system='You are an expert marine and recreational vehicle mechanic.\nVehicle: '+(v?.name||'Unknown')+(v?.nickname?' (called "'+v.nickname+'")':'')+'\nType: '+typeLabel(v?.type)+'\nMake/Model: '+([v?.make,v?.model].filter(Boolean).join(' ')||'Unknown')+'\nYear: '+(v?.year||'Unknown')+'\nEngine: '+(v?.engine_type||'Unknown')+'\nHull/VIN: '+(v?.hull_vin||'Unknown')+'\nNotes: '+(v?.notes||'None')+'\n\nMaintenance History:\n'+hist+(connectedItems.length?'\n\nConnected equipment:\n'+connectedItems.map(a=>'- '+displayName(a)+' ('+typeLabel(a.type)+')').join('\n'):'')+'\n\nGive practical, specific advice. Reference history when relevant. Flag safety concerns clearly.';
       advisorHistory.push({role:'user',content:message});
       const response=await callClaudeChat(advisorHistory,system);
       advisorHistory.push({role:'assistant',content:response});
@@ -1533,7 +1533,8 @@
 
   // ── INIT ───────────────────────────────────────────────────────
   document.getElementById('buildDate').textContent = 'Build: ' +
-    new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + ' ' +
+    new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 
   loadAll();
 
