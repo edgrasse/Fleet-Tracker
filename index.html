@@ -36,16 +36,23 @@
     .section.active { display: block; }
     .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid var(--accent); }
     .card h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--water); margin-bottom: 1rem; }
-    .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
     .vehicle-card { background: linear-gradient(135deg, var(--foam) 0%, white 100%); border-radius: 12px; padding: 1.5rem; border: 2px solid var(--sand); transition: all 0.3s ease; }
-    .vehicle-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(45,95,141,0.15); border-color: var(--accent); }
-    .vehicle-card h4 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--water); margin-bottom: 0.75rem; }
-    .type-badge { display: inline-block; background: var(--accent); color: white; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .vehicle-details { font-size: 0.9rem; color: var(--stone); line-height: 1.6; margin-bottom: 0.75rem; }
-    .vehicle-details strong { color: var(--water); }
+    .vehicle-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(45,95,141,0.12); border-color: var(--wave); }
+    .vehicle-card .nickname { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--water); margin-bottom: 0.15rem; font-weight: 700; }
+    .vehicle-card .full-name { font-size: 0.8rem; color: var(--stone); margin-bottom: 0.75rem; font-style: italic; }
+    .vehicle-details { font-size: 0.88rem; color: var(--stone); line-height: 1.7; margin-bottom: 0.75rem; }
+    .vehicle-details strong { color: var(--dark); font-weight: 600; }
+    .connected-items { margin-top: 0.75rem; border-top: 1px solid var(--sand); padding-top: 0.75rem; }
+    .connected-item-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; border-radius: 6px; font-size: 0.85rem; color: var(--wave); cursor: pointer; transition: background 0.2s; }
+    .connected-item-row:hover { background: var(--foam); color: var(--accent); }
+    .type-filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .type-filter-btn { padding: 0.4rem 1rem; border: 2px solid var(--sand); border-radius: 20px; background: white; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--stone); transition: all 0.2s; }
+    .type-filter-btn.active { background: var(--water); color: white; border-color: var(--water); }
+    .type-badge { display: inline-block; background: var(--accent); color: white; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
     .form-group { margin-bottom: 1.25rem; }
     label { display: block; font-weight: 600; color: var(--water); margin-bottom: 0.4rem; font-size: 0.9rem; }
-    input, select, textarea { width: 100%; padding: 0.7rem; border: 2px solid var(--sand); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+    input, select, textarea { width: 100%; padding: 0.7rem; border: 2px solid var(--sand); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--dark); background: white; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
     textarea { resize: vertical; min-height: 80px; }
     .btn { padding: 0.7rem 1.4rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
@@ -54,15 +61,17 @@
     .btn-secondary { background: var(--accent); color: white; }
     .btn-secondary:hover { background: #c47030; }
     .btn-danger { background: #dc3545; color: white; }
+    .btn-ghost { background: transparent; color: var(--stone); border: 1px solid var(--sand); }
+    .btn-ghost:hover { border-color: var(--wave); color: var(--water); }
     .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
-    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem; }
     .modal.active { display: flex; }
-    .modal-content { background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; margin: auto; }
+    .modal-content { background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; margin: auto; }
     .modal-content h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--water); margin-bottom: 1.5rem; }
-    .modal-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end; }
+    .modal-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end; flex-wrap: wrap; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
-    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--stone); }
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--stone); }
     .method-button { display: block; width: 100%; padding: 1.25rem; border: 2px solid var(--sand); border-radius: 10px; background: white; cursor: pointer; text-align: center; margin-bottom: 0.75rem; transition: all 0.3s; }
     .method-button:hover { border-color: var(--accent); background: var(--foam); }
     .method-button strong { display: block; color: var(--water); font-size: 1rem; margin-bottom: 0.25rem; }
@@ -77,11 +86,14 @@
     .extracted-field { display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid var(--sand); font-size: 0.9rem; }
     .extracted-field:last-child { border-bottom: none; }
     .extracted-field span:first-child { color: var(--stone); font-weight: 600; }
-    .doc-item { background: white; border-radius: 10px; padding: 1.1rem; margin-bottom: 0.75rem; border-left: 4px solid var(--wave); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-    .doc-item h4 { font-size: 1rem; color: var(--dark); margin-bottom: 0.25rem; }
-    .maint-item { background: white; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; border-left: 4px solid var(--wave); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .maint-item .header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
-    .maint-item h4 { font-family: 'Playfair Display', serif; color: var(--water); font-size: 1.05rem; }
+    .doc-item { background: white; border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 0.75rem; border-left: 4px solid var(--wave); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    /* Maintenance — redesigned */
+    .maint-item { background: white; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; border-left: 4px solid var(--wave); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .maint-item-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem; }
+    .maint-item-date { font-size: 0.9rem; font-weight: 700; color: var(--dark); }
+    .maint-item-cost { font-size: 0.95rem; font-weight: 700; color: var(--accent); }
+    .maint-item-desc { font-size: 1rem; color: var(--dark); margin-bottom: 0.3rem; line-height: 1.5; }
+    .maint-item-meta { font-size: 0.8rem; color: var(--stone); }
     .checklist-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.7rem; border-radius: 8px; background: var(--foam); border: 1px solid var(--sand); margin-bottom: 0.4rem; }
     .checklist-item.done { background: #f0f9f4; border-color: #a8d5b5; }
     .checklist-item input[type="checkbox"] { width: auto; margin-top: 2px; accent-color: var(--success); }
@@ -99,23 +111,30 @@
     .chat-row input { flex: 1; }
     .filter-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem; }
     .filter-bar select { width: auto; padding: 0.45rem 0.75rem; font-size: 0.85rem; }
-    .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; background: var(--dark); color: white; padding: 0.9rem 1.4rem; border-radius: 10px; font-weight: 600; transform: translateY(100px); opacity: 0; transition: all 0.3s; max-width: 320px; }
+    .sort-btn { padding: 0.4rem 0.9rem; font-size: 0.82rem; border: 1px solid var(--sand); border-radius: 6px; background: white; cursor: pointer; color: var(--stone); font-weight: 600; }
+    .sort-btn:hover { border-color: var(--water); color: var(--water); }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; background: var(--dark); color: white; padding: 0.9rem 1.4rem; border-radius: 10px; font-weight: 600; transform: translateY(100px); opacity: 0; transition: all 0.3s; max-width: 340px; }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.error { border-left: 4px solid #dc3545; }
     .toast.success { border-left: 4px solid var(--success); }
-    .connection-badge { font-size: 0.82rem; color: var(--wave); cursor: pointer; margin-top: 0.4rem; }
-    .connection-badge:hover { text-decoration: underline; }
-    .vehicle-detail-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--sand); padding-bottom: 0.75rem; }
-    .vehicle-detail-tab { padding: 0.45rem 1rem; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--stone); border-radius: 6px; }
+    .vehicle-detail-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--sand); padding-bottom: 0.75rem; flex-wrap: wrap; }
+    .vehicle-detail-tab { padding: 0.45rem 1rem; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 0.88rem; color: var(--stone); border-radius: 6px; }
     .vehicle-detail-tab.active { background: var(--water); color: white; }
     .detail-section { display: none; }
     .detail-section.active { display: block; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 1rem; }
     .info-item { background: var(--foam); border-radius: 8px; padding: 0.6rem 0.9rem; }
-    .info-item .lbl { font-size: 0.75rem; font-weight: 700; color: var(--stone); text-transform: uppercase; letter-spacing: 0.04em; }
-    .info-item .val { font-size: 0.95rem; color: var(--dark); margin-top: 0.15rem; font-weight: 500; }
-    .confirm-receipt { background: #fffdf0; border: 2px solid #f0d890; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .info-item .lbl { font-size: 0.72rem; font-weight: 700; color: var(--stone); text-transform: uppercase; letter-spacing: 0.04em; }
+    .info-item .val { font-size: 0.93rem; color: var(--dark); margin-top: 0.15rem; font-weight: 500; }
     @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
+    .field-update-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--sand); font-size: 0.88rem; flex-wrap: wrap; }
+    .field-update-row:last-child { border-bottom: none; }
+    .field-update-row label { margin: 0; font-weight: 400; color: var(--dark); display: flex; align-items: center; gap: 0.4rem; cursor: pointer; min-width: 80px; }
+    .field-update-row input[type="checkbox"] { width: auto; accent-color: var(--success); }
+    .field-old { color: var(--stone); text-decoration: line-through; font-size: 0.85rem; }
+    .field-new { color: var(--success); font-weight: 600; }
+    .connection-prompt { background: #e8f4fd; border: 2px solid var(--wave); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .connection-prompt p { color: var(--water); font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -129,7 +148,6 @@
 <div class="container">
   <div class="nav-tabs">
     <button class="active" onclick="showTab('vehicles',this)">🚤 Vehicles</button>
-    <button onclick="showTab('accessories',this)">🔩 Accessories</button>
     <button onclick="showTab('maintenance',this)">🔧 Maintenance</button>
     <button onclick="showTab('documents',this)">📄 Documents</button>
     <button onclick="showTab('checklists',this)">☑️ Checklists</button>
@@ -141,20 +159,13 @@
   <div id="tab-vehicles" class="section active">
     <div class="card">
       <h3>🚤 Fleet Vehicles</h3>
-      <p style="color:var(--stone);margin-bottom:1rem;">Boats, snowmobiles, jet skis, trucks, and other vehicles.</p>
-      <button class="btn btn-primary" onclick="openAddModal()">+ Add Vehicle</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">
+        <p style="color:var(--stone);">Boats, snowmobiles, trailers, and all your equipment.</p>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Vehicle</button>
+      </div>
+      <div id="typeFilterBar" class="type-filter-bar"></div>
     </div>
     <div id="vehicleGrid" class="vehicle-grid"></div>
-  </div>
-
-  <!-- ACCESSORIES -->
-  <div id="tab-accessories" class="section">
-    <div class="card">
-      <h3>🔩 Accessories & Equipment</h3>
-      <p style="color:var(--stone);margin-bottom:1rem;">Trailers, fish finders, boat lifts, and other equipment connected to your fleet.</p>
-      <button class="btn btn-primary" onclick="openAddModal()">+ Add Accessory</button>
-    </div>
-    <div id="accessoryGrid" class="vehicle-grid"></div>
   </div>
 
   <!-- MAINTENANCE -->
@@ -177,6 +188,7 @@
           <option value="repair">Repair</option>
           <option value="other">Other</option>
         </select>
+        <button class="sort-btn" id="sortBtn" onclick="toggleSort()">↓ Newest First</button>
       </div>
     </div>
     <div id="maintenanceList"></div>
@@ -186,12 +198,10 @@
   <div id="tab-documents" class="section">
     <div class="card">
       <h3>📄 Documents</h3>
-      <p style="color:var(--stone);margin-bottom:1rem;">Upload manuals, receipts, and vehicle documents. AI will analyze each file.</p>
+      <p style="color:var(--stone);margin-bottom:1rem;">Upload manuals, receipts, and vehicle documents.</p>
       <div class="form-group">
         <label>Select Vehicle</label>
-        <select id="docVehicleSelect" onchange="onDocVehicleChange()">
-          <option value="">Choose a vehicle...</option>
-        </select>
+        <select id="docVehicleSelect" onchange="onDocVehicleChange()"><option value="">Choose a vehicle...</option></select>
       </div>
       <div id="docActions" style="display:none;">
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
@@ -199,9 +209,7 @@
           <button class="btn btn-secondary" onclick="openUrlModal()">🔗 Link Online Manual</button>
         </div>
         <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleFileUpload(event)">
-        <div id="uploadProgress" style="display:none;">
-          <div class="ai-processing"><p><span class="spinner"></span><span id="uploadMsg">Analyzing...</span></p></div>
-        </div>
+        <div id="uploadProgress" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span><span id="uploadMsg">Analyzing...</span></p></div></div>
       </div>
       <div id="docList"></div>
     </div>
@@ -214,9 +222,7 @@
       <p style="color:var(--stone);margin-bottom:1rem;">AI-generated maintenance checklists per vehicle.</p>
       <div class="form-group">
         <label>Select Vehicle</label>
-        <select id="checklistVehicle" onchange="onChecklistVehicleChange()">
-          <option value="">Choose a vehicle...</option>
-        </select>
+        <select id="checklistVehicle" onchange="onChecklistVehicleChange()"><option value="">Choose a vehicle...</option></select>
       </div>
       <div id="checklistContent"></div>
     </div>
@@ -226,12 +232,10 @@
   <div id="tab-advisor" class="section">
     <div class="card">
       <h3>🤖 AI Fleet Advisor</h3>
-      <p style="color:var(--stone);margin-bottom:1rem;">Ask questions about any vehicle — AI knows its history and connected equipment.</p>
+      <p style="color:var(--stone);margin-bottom:1rem;">Ask questions about any vehicle — AI knows its history and documents.</p>
       <div class="form-group">
         <label>Select Vehicle</label>
-        <select id="advisorVehicle" onchange="onAdvisorVehicleChange()">
-          <option value="">Choose a vehicle...</option>
-        </select>
+        <select id="advisorVehicle" onchange="onAdvisorVehicleChange()"><option value="">Choose a vehicle...</option></select>
       </div>
       <div id="advisorSection" style="display:none;">
         <div id="advisorBadge" style="background:linear-gradient(135deg,var(--water),var(--wave));color:white;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.9rem;"></div>
@@ -266,25 +270,24 @@
   </div>
 </div>
 
-<!-- ADD/EDIT VEHICLE MODAL -->
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- ADD/EDIT VEHICLE -->
 <div id="vehicleModal" class="modal" onclick="if(event.target===this)closeVehicleModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 id="vehicleModalTitle">Add Vehicle</h2>
-
-    <!-- Step 1: choose method (only for add) -->
     <div id="step1">
       <p style="color:var(--stone);margin-bottom:1rem;">How would you like to add this vehicle?</p>
       <button class="method-button" onclick="goStep('manual')"><strong>✍️ Manual Entry</strong><small>Type in the details</small></button>
       <button class="method-button" onclick="goStep('doc')"><strong>📄 Upload Document</strong><small>Title, registration, or manual — AI extracts details</small></button>
       <button class="method-button" onclick="goStep('photo')"><strong>📸 Photo Scan</strong><small>Photo of nameplate or sticker — AI identifies the vehicle</small></button>
-      <div class="modal-buttons"><button class="btn btn-secondary" onclick="closeVehicleModal()">Cancel</button></div>
+      <div class="modal-buttons"><button class="btn btn-ghost" onclick="closeVehicleModal()">Cancel</button></div>
     </div>
-
-    <!-- Step 2a: Manual form -->
     <div id="step-manual" style="display:none;">
       <input type="hidden" id="editId">
       <div class="two-col">
-        <div class="form-group"><label>Name *</label><input type="text" id="vName" placeholder="e.g., Sea Ray 240"></div>
+        <div class="form-group"><label>Nickname <span style="font-weight:400;color:var(--stone);">(optional)</span></label><input type="text" id="vNickname" placeholder="e.g., Blue Beauty"></div>
+        <div class="form-group"><label>Full Name *</label><input type="text" id="vName" placeholder="e.g., 2003 Sea Ray 240 Sundeck"></div>
         <div class="form-group">
           <label>Type *</label>
           <select id="vType" onchange="onTypeChange()">
@@ -302,47 +305,151 @@
           <input type="text" id="vTypeCustom" placeholder="Describe type..." style="display:none;margin-top:0.5rem;">
         </div>
         <div class="form-group"><label>Make</label><input type="text" id="vMake" placeholder="e.g., Sea Ray"></div>
-        <div class="form-group"><label>Model</label><input type="text" id="vModel" placeholder="e.g., 240 Bow Runner"></div>
-        <div class="form-group"><label>Year</label><input type="number" id="vYear" placeholder="e.g., 2005"></div>
-        <div class="form-group"><label>Engine</label><input type="text" id="vEngine" placeholder="e.g., MerCruiser 5.0L"></div>
+        <div class="form-group"><label>Model</label><input type="text" id="vModel" placeholder="e.g., 240 Sundeck"></div>
+        <div class="form-group"><label>Year</label><input type="number" id="vYear" placeholder="e.g., 2003"></div>
+        <div class="form-group"><label>Engine</label><input type="text" id="vEngine" placeholder="e.g., MerCruiser Bravo III 5.0L"></div>
       </div>
       <div class="form-group"><label>Hull / VIN</label><input type="text" id="vHull" placeholder="e.g., SERV5243C292"></div>
       <div id="connectedToGroup" style="display:none;">
-        <div class="form-group">
-          <label>Connected To (primary vehicle)</label>
-          <select id="vConnectedTo"><option value="">None</option></select>
+        <div class="connection-prompt">
+          <p>🔗 Connect to a vehicle? <span style="font-weight:400;font-size:0.85rem;">(optional)</span></p>
+          <select id="vConnectedTo"><option value="">No connection</option></select>
         </div>
       </div>
       <div class="form-group"><label>Notes</label><textarea id="vNotes" placeholder="Any additional notes..."></textarea></div>
       <div class="modal-buttons">
-        <button class="btn btn-secondary" id="backBtn" onclick="goStep('choose')" style="display:none;">Back</button>
-        <button class="btn btn-secondary" onclick="closeVehicleModal()">Cancel</button>
+        <button class="btn btn-ghost" id="backBtn" onclick="goStep('choose')" style="display:none;">← Back</button>
+        <button class="btn btn-ghost" onclick="closeVehicleModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveVehicle()">Save</button>
       </div>
     </div>
-
-    <!-- Step 2b: Document upload -->
     <div id="step-doc" style="display:none;">
       <p style="color:var(--stone);margin-bottom:1rem;">Upload a title, registration, or manual — AI will extract vehicle details.</p>
-      <div id="docUploadArea" class="upload-area" onclick="document.getElementById('scanDocInput').click()">
-        <p>📁 Click to upload (PDF, JPG, PNG)</p>
-      </div>
+      <div id="docUploadArea" class="upload-area" onclick="document.getElementById('scanDocInput').click()"><p>📁 Click to upload (PDF, JPG, PNG)</p></div>
       <input type="file" id="scanDocInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleScanDoc(event)">
       <div id="scanDocProcessing" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span> AI is reading your document...</p></div></div>
       <div id="scanDocResult" style="display:none;"></div>
-      <div class="modal-buttons"><button class="btn btn-secondary" onclick="goStep('choose')">Back</button></div>
+      <div class="modal-buttons"><button class="btn btn-ghost" onclick="goStep('choose')">← Back</button></div>
     </div>
-
-    <!-- Step 2c: Photo scan -->
     <div id="step-photo" style="display:none;">
       <p style="color:var(--stone);margin-bottom:1rem;">Take or upload a photo of the nameplate, hull sticker, or engine label.</p>
-      <div class="upload-area" onclick="document.getElementById('scanPhotoInput').click()">
-        <p>📸 Click to take or upload photo</p>
-      </div>
+      <div class="upload-area" onclick="document.getElementById('scanPhotoInput').click()"><p>📸 Click to take or upload photo</p></div>
       <input type="file" id="scanPhotoInput" accept="image/*" style="display:none;" onchange="handleScanPhoto(event)">
       <div id="scanPhotoProcessing" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span> AI is identifying vehicle...</p></div></div>
       <div id="scanPhotoResult" style="display:none;"></div>
-      <div class="modal-buttons"><button class="btn btn-secondary" onclick="goStep('choose')">Back</button></div>
+      <div class="modal-buttons"><button class="btn btn-ghost" onclick="goStep('choose')">← Back</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- FIELD UPDATE PROMPT -->
+<div id="fieldUpdateModal" class="modal" onclick="if(event.target===this)closeModal('fieldUpdateModal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2>🤖 AI Found New Info</h2>
+    <p style="color:var(--stone);margin-bottom:1.25rem;">Your document contains information that could update this vehicle's record. Check the fields you want to update.</p>
+    <div id="fieldUpdateList"></div>
+    <input type="hidden" id="fuVehicleId">
+    <div class="modal-buttons">
+      <button class="btn btn-ghost" onclick="closeModal('fieldUpdateModal');reopenVehicleDetail()">Skip All</button>
+      <button class="btn btn-primary" onclick="applyFieldUpdates()">Update Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- VEHICLE DETAIL -->
+<div id="vehicleDetailModal" class="modal" onclick="if(event.target===this)closeModal('vehicleDetailModal')">
+  <div class="modal-content" style="max-width:720px;" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap;">
+      <div>
+        <h2 id="detailTitle" style="margin-bottom:0.2rem;font-size:1.5rem;"></h2>
+        <div id="detailSubtitle" style="color:var(--stone);font-size:0.88rem;"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" id="detailEditBtn">✏️ Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('vehicleDetailModal')">Close</button>
+      </div>
+    </div>
+    <div class="vehicle-detail-tabs">
+      <button class="vehicle-detail-tab active" onclick="switchDetailTab('overview',this)">Overview</button>
+      <button class="vehicle-detail-tab" onclick="switchDetailTab('maintenance',this)">🔧 Maintenance</button>
+      <button class="vehicle-detail-tab" onclick="switchDetailTab('documents',this)">📄 Documents</button>
+    </div>
+    <div id="detail-overview" class="detail-section active">
+      <div id="detailInfoGrid" class="info-grid"></div>
+      <div id="detailNotes"></div>
+      <div id="detailConnections"></div>
+    </div>
+    <div id="detail-maintenance" class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <span style="font-size:0.88rem;color:var(--stone);">All maintenance for this vehicle</span>
+        <button class="btn btn-primary btn-sm" id="detailAddMaintBtn">+ Add Entry</button>
+      </div>
+      <div id="detailMaintenanceList"></div>
+    </div>
+    <div id="detail-documents" class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <span style="font-size:0.88rem;color:var(--stone);">All documents for this vehicle</span>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-primary btn-sm" id="detailUploadBtn">📁 Upload</button>
+          <button class="btn btn-secondary btn-sm" onclick="openUrlModalFromDetail()">🔗 Link Manual</button>
+        </div>
+      </div>
+      <input type="file" id="detailFileInput" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleDetailFileUpload(event)">
+      <div id="detailUploadProgress" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span><span id="detailUploadMsg">Analyzing...</span></p></div></div>
+      <div id="detailDocList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT DOCUMENT -->
+<div id="editDocModal" class="modal" onclick="if(event.target===this)closeModal('editDocModal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2>✏️ Edit Document</h2>
+    <div class="form-group"><label>Document Name</label><input type="text" id="edName"></div>
+    <div class="form-group"><label>Document Type</label>
+      <select id="edType">
+        <option value="manual">Manual</option>
+        <option value="maintenance_receipt">Receipt</option>
+        <option value="vehicle_info">Vehicle Info / Title</option>
+        <option value="parts_diagram">Parts Diagram</option>
+        <option value="spec_sheet">Spec Sheet</option>
+        <option value="url_link">Online Manual Link</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="edNotes" style="min-height:60px;"></textarea></div>
+    <input type="hidden" id="edDocId">
+    <div class="modal-buttons">
+      <button class="btn btn-ghost" onclick="closeModal('editDocModal');reopenVehicleDetail()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDocEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT CONFIRM -->
+<div id="receiptConfirmModal" class="modal" onclick="if(event.target===this)closeModal('receiptConfirmModal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2>📄 Receipt Detected</h2>
+    <p style="color:var(--stone);margin-bottom:1.25rem;">AI extracted these details — verify and save to maintenance log.</p>
+    <div style="background:#fffdf0;border:2px solid #f0d890;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+      <div class="form-group"><label>Type</label>
+        <select id="rcType">
+          <option value="oil_change">Oil Change</option><option value="winterization">Winterization</option>
+          <option value="commissioning">Commissioning</option><option value="inspection">Inspection</option>
+          <option value="repair">Repair</option><option value="other">Other</option>
+        </select>
+      </div>
+      <div class="two-col">
+        <div class="form-group"><label>Date</label><input type="date" id="rcDate"></div>
+        <div class="form-group"><label>Cost ($)</label><input type="number" id="rcCost" step="0.01"></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="rcDesc"></textarea></div>
+      <div class="form-group"><label>Completed By</label><input type="text" id="rcBy"></div>
+    </div>
+    <input type="hidden" id="rcVehicleId">
+    <div class="modal-buttons">
+      <button class="btn btn-ghost" onclick="closeModal('receiptConfirmModal');reopenVehicleDetail()">Skip — Save Doc Only</button>
+      <button class="btn btn-primary" onclick="saveReceiptConfirm()">✅ Save to Log</button>
     </div>
   </div>
 </div>
@@ -352,8 +459,7 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2>Add Maintenance Entry</h2>
     <div class="form-group"><label>Vehicle *</label><select id="mVehicle"><option value="">Select...</option></select></div>
-    <div class="form-group">
-      <label>Type *</label>
+    <div class="form-group"><label>Type *</label>
       <select id="mType">
         <option value="">Select...</option>
         <option value="oil_change">Oil Change</option>
@@ -374,7 +480,7 @@
       <div class="form-group"><label>Completed By</label><input type="text" id="mBy" placeholder="Name or shop"></div>
     </div>
     <div class="modal-buttons">
-      <button class="btn btn-secondary" onclick="closeModal('maintenanceModal')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('maintenanceModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveMaintenance()">Save</button>
     </div>
   </div>
@@ -409,11 +515,11 @@
         <div class="form-group"><label>Completed By</label><input type="text" id="rBy"></div>
       </div>
       <div class="modal-buttons">
-        <button class="btn btn-secondary" onclick="closeModal('receiptModal')">Cancel</button>
+        <button class="btn btn-ghost" onclick="closeModal('receiptModal')">Cancel</button>
         <button class="btn btn-primary" onclick="saveReceiptEntry()">Save to Log</button>
       </div>
     </div>
-    <div id="receiptCancel" class="modal-buttons"><button class="btn btn-secondary" onclick="closeModal('receiptModal')">Cancel</button></div>
+    <div id="receiptCancel" class="modal-buttons"><button class="btn btn-ghost" onclick="closeModal('receiptModal')">Cancel</button></div>
   </div>
 </div>
 
@@ -429,141 +535,56 @@
         <option value="spec_sheet">Spec Sheet</option><option value="vehicle_info">Vehicle Info</option><option value="other">Other</option>
       </select>
     </div>
-    <div class="form-group"><label>Notes (optional)</label><input type="text" id="urlNotes" placeholder="e.g., 2005 model, 5.0L engine"></div>
+    <div class="form-group"><label>Notes (optional)</label><input type="text" id="urlNotes" placeholder="e.g., 2003 model, 5.0L engine"></div>
     <div class="modal-buttons">
-      <button class="btn btn-secondary" onclick="closeModal('urlModal')">Cancel</button>
+      <button class="btn btn-ghost" onclick="closeModal('urlModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveUrlDoc()">Save Link</button>
     </div>
   </div>
 </div>
 
-<!-- VEHICLE DETAIL MODAL -->
-<div id="vehicleDetailModal" class="modal" onclick="if(event.target===this)closeModal('vehicleDetailModal')">
-  <div class="modal-content" style="max-width:700px;" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;gap:1rem;">
-      <div>
-        <h2 id="detailTitle" style="margin-bottom:0.25rem;"></h2>
-        <div id="detailSubtitle" style="color:var(--stone);font-size:0.9rem;"></div>
-      </div>
-      <div style="display:flex;gap:0.5rem;flex-shrink:0;">
-        <button class="btn btn-primary btn-sm" id="detailEditBtn" onclick="">✏️ Edit</button>
-        <button class="btn btn-secondary btn-sm" onclick="closeModal('vehicleDetailModal')">Close</button>
-      </div>
-    </div>
-    <div class="vehicle-detail-tabs">
-      <button class="vehicle-detail-tab active" onclick="switchDetailTab('overview',this)">Overview</button>
-      <button class="vehicle-detail-tab" onclick="switchDetailTab('maintenance',this)">🔧 Maintenance</button>
-      <button class="vehicle-detail-tab" onclick="switchDetailTab('documents',this)">📄 Documents</button>
-    </div>
-    <!-- Overview -->
-    <div id="detail-overview" class="detail-section active">
-      <div id="detailInfoGrid" class="info-grid"></div>
-      <div id="detailNotes"></div>
-      <div id="detailConnections"></div>
-    </div>
-    <!-- Maintenance -->
-    <div id="detail-maintenance" class="detail-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-        <span style="font-size:0.9rem;color:var(--stone);">All maintenance for this vehicle</span>
-        <button class="btn btn-primary btn-sm" id="detailAddMaintBtn">+ Add Entry</button>
-      </div>
-      <div id="detailMaintenanceList"></div>
-    </div>
-    <!-- Documents -->
-    <div id="detail-documents" class="detail-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-        <span style="font-size:0.9rem;color:var(--stone);">All documents for this vehicle</span>
-        <div style="display:flex;gap:0.5rem;">
-          <button class="btn btn-primary btn-sm" id="detailUploadBtn">📁 Upload</button>
-          <button class="btn btn-secondary btn-sm" onclick="openUrlModalFromDetail()">🔗 Link Manual</button>
-        </div>
-      </div>
-      <input type="file" id="detailFileInput" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleDetailFileUpload(event)">
-      <div id="detailUploadProgress" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span><span id="detailUploadMsg">Analyzing...</span></p></div></div>
-      <div id="detailDocList"></div>
-    </div>
-  </div>
-</div>
-
-<!-- RECEIPT CONFIRM MODAL (from document upload) -->
-<div id="receiptConfirmModal" class="modal" onclick="if(event.target===this)closeModal('receiptConfirmModal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2>📄 Receipt Detected</h2>
-    <p style="color:var(--stone);margin-bottom:1.25rem;">AI extracted these details — verify and save to maintenance log.</p>
-    <div class="confirm-receipt">
-      <div class="form-group"><label>Type</label>
-        <select id="rcType">
-          <option value="oil_change">Oil Change</option><option value="winterization">Winterization</option>
-          <option value="commissioning">Commissioning</option><option value="inspection">Inspection</option>
-          <option value="repair">Repair</option><option value="other">Other</option>
-        </select>
-      </div>
-      <div class="two-col">
-        <div class="form-group"><label>Date</label><input type="date" id="rcDate"></div>
-        <div class="form-group"><label>Cost ($)</label><input type="number" id="rcCost" step="0.01"></div>
-      </div>
-      <div class="form-group"><label>Description</label><textarea id="rcDesc"></textarea></div>
-      <div class="form-group"><label>Completed By</label><input type="text" id="rcBy"></div>
-    </div>
-    <input type="hidden" id="rcVehicleId">
-    <input type="hidden" id="rcFileName">
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" onclick="closeModal('receiptConfirmModal');reopenVehicleDetail()">Skip — Save Doc Only</button>
-      <button class="btn btn-primary" onclick="saveReceiptConfirm()">✅ Save to Log</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
 <div id="toast" class="toast"></div>
 
 <script>
   const WORKER_URL = 'https://grasse-apps-proxy.ed-53c.workers.dev';
   const APP_ID = 'fleet';
+  const SUPABASE_URL = 'https://viprflxaudxjwsvytrnn.supabase.co';
+  const STORAGE_BUCKET = 'fleet_documents';
   const ACCESSORY_TYPES = ['trailer','fish_finder','boat_lift'];
 
-  let vehicles = [];
-  let connections = [];
-  let maintenanceLog = [];
-  let checklists = {};
+  let vehicles = [], connections = [], maintenanceLog = [], checklists = {};
   let advisorHistory = [];
   let currentAdvisorVehicleId = null;
-  let currentChecklistVehicleId = null;
-  let currentChecklistSeason = 'spring';
+  let currentChecklistVehicleId = null, currentChecklistSeason = 'spring';
+  let currentDetailVehicleId = null;
+  let maintSortDesc = true;
+  let vehicleTypeFilter = 'all';
 
   // ── UTILITIES ──────────────────────────────────────────────────
   function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
-
   function showToast(msg, type='success') {
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show ' + type;
     setTimeout(() => { t.className = 'toast'; }, 3500);
   }
-
   function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
   function formatDate(s) {
     if (!s) return '';
     const d = new Date(s);
     return isNaN(d) ? s : d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   }
-
   function fmtCost(v) { return v ? '$' + parseFloat(v).toFixed(2) : ''; }
-
   function isAccessory(type) { return ACCESSORY_TYPES.includes(type); }
-
   function typeLabel(type) {
     const m = {boat:'Boat',snowmobile:'Snowmobile',jet_ski:'Jet Ski',truck:'Truck',atv:'ATV/UTV',
       trailer:'Trailer',fish_finder:'Electronics',boat_lift:'Boat Lift'};
     return m[type] || (type ? type.charAt(0).toUpperCase()+type.slice(1) : 'Vehicle');
   }
-
   function maintTypeLabel(t) {
     const m = {oil_change:'Oil Change',winterization:'Winterization',commissioning:'Commissioning',
       inspection:'Inspection',repair:'Repair',other:'Other'};
     return m[t] || t || 'Other';
   }
-
   function fileToBase64(file) {
     return new Promise((res,rej) => {
       const r = new FileReader();
@@ -572,22 +593,34 @@
       r.readAsDataURL(file);
     });
   }
+  function displayName(v) { return v.nickname || v.name || 'Unnamed'; }
 
   // ── WORKER / SUPABASE ──────────────────────────────────────────
   async function workerCall(payload) {
     const r = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({appId: APP_ID, ...payload})
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({appId:APP_ID, ...payload})
     });
     if (!r.ok) throw new Error('Worker error: ' + r.status);
     return r.json();
   }
-  async function sbGet(table, filters) { return workerCall({method:'SELECT', table, filters: filters||''}); }
-  async function sbInsert(table, row)  { return workerCall({method:'INSERT', table, data: row}); }
+  async function sbGet(table, filters) { return workerCall({method:'SELECT', table, filters:filters||''}); }
+  async function sbInsert(table, row) { return workerCall({method:'INSERT', table, data:row}); }
   async function sbUpdate(table, id, row) { return workerCall({method:'UPDATE', table, idField:'id', idValue:id, data:row}); }
-  async function sbDelete(table, id)   { return workerCall({method:'DELETE', table, idField:'id', idValue:id}); }
+  async function sbDelete(table, id) { return workerCall({method:'DELETE', table, idField:'id', idValue:id}); }
   async function sbUpsert(table, row, conflict) { return workerCall({method:'UPSERT', table, data:row, filters:conflict||''}); }
+
+  // ── STORAGE UPLOAD ─────────────────────────────────────────────
+  async function uploadToStorage(file, vehicleId) {
+    const base64 = await fileToBase64(file);
+    const result = await workerCall({
+      method:'STORAGE_UPLOAD', bucket:STORAGE_BUCKET,
+      filePath: vehicleId + '/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),
+      base64Data: base64, contentType: file.type
+    });
+    if (result && result.publicUrl) return result.publicUrl;
+    throw new Error('Storage upload failed');
+  }
 
   // ── CLAUDE API ─────────────────────────────────────────────────
   async function callClaude(method, base64Data, mediaType) {
@@ -600,7 +633,6 @@
     if (d.error) throw new Error(d.error);
     return d.result;
   }
-
   async function callClaudeChat(messages, system) {
     const r = await fetch(WORKER_URL, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -618,42 +650,62 @@
     document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + id).classList.add('active');
     if (btn) btn.classList.add('active');
-    if (id === 'maintenance') loadMaintenance();
   }
 
   // ── LOAD DATA ──────────────────────────────────────────────────
   function loadAll() {
-    sbGet('FleetVehicles','order=name.asc')
-      .then(data => {
-        vehicles = Array.isArray(data) ? data : [];
-        renderVehicles();
-        renderAccessories();
-        populateSelects();
-      })
-      .catch(err => {
-        document.getElementById('vehicleGrid').innerHTML =
-          '<div class="empty-state"><p style="color:#dc3545">Error: ' + err.message + '</p></div>';
-      });
-
-    sbGet('FleetConnections','')
-      .then(data => { connections = Array.isArray(data) ? data : []; renderAccessories(); })
-      .catch(() => { connections = []; });
-
-    // Always load maintenance log on startup
-    sbGet('FleetMaintenanceLog','order=created_at.desc')
-      .then(data => { maintenanceLog = Array.isArray(data) ? data : []; renderMaintenance(); })
-      .catch(() => { maintenanceLog = []; });
+    Promise.all([
+      sbGet('FleetVehicles','order=name.asc'),
+      sbGet('FleetConnections',''),
+      sbGet('FleetMaintenanceLog','order=date.desc')
+    ]).then(([vData, cData, mData]) => {
+      vehicles = Array.isArray(vData) ? vData : [];
+      connections = Array.isArray(cData) ? cData : [];
+      maintenanceLog = Array.isArray(mData) ? mData : [];
+      renderVehicles();
+      populateSelects();
+      renderMaintenance();
+    }).catch(err => {
+      document.getElementById('vehicleGrid').innerHTML =
+        '<div class="empty-state"><p style="color:#dc3545">Error loading: ' + err.message + '</p></div>';
+    });
   }
 
   // ── RENDER VEHICLES ────────────────────────────────────────────
-  function vehicleCard(v, showConn) {
-    const parent = showConn
-      ? vehicles.find(p => connections.some(c => c.item_id===v.id && c.vehicle_id===p.id && c.connection_type==='primary'))
-      : null;
-    const name = (v.name||'').replace(/'/g,"\\'");
+  function renderTypeFilterBar() {
+    const bar = document.getElementById('typeFilterBar');
+    const types = [...new Set(vehicles.map(v => v.type).filter(Boolean))];
+    if (types.length < 2) { bar.innerHTML = ''; return; }
+    bar.innerHTML = ['all',...types].map(t =>
+      '<button class="type-filter-btn' + (vehicleTypeFilter===t?' active':'') + '" onclick="setTypeFilter(\'' + t + '\')">' +
+      (t==='all'?'All':typeLabel(t)) + '</button>'
+    ).join('');
+  }
+
+  function setTypeFilter(type) { vehicleTypeFilter = type; renderVehicles(); }
+
+  function renderVehicles() {
+    renderTypeFilterBar();
+    const grid = document.getElementById('vehicleGrid');
+    let list = vehicleTypeFilter==='all' ? vehicles : vehicles.filter(v=>v.type===vehicleTypeFilter);
+    grid.innerHTML = list.length ? list.map(v => vehicleCard(v)).join('')
+      : '<div class="empty-state"><p>No vehicles yet. Click + Add Vehicle to get started.</p></div>';
+  }
+
+  function vehicleCard(v) {
+    const nick = displayName(v);
+    const showFull = v.nickname && v.name && v.nickname !== v.name;
+    const safeName = (v.name||'').replace(/'/g,"\\'");
+
+    const connectedItems = connections.filter(c=>c.vehicle_id===v.id)
+      .map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
+    const parentConn = connections.find(c=>c.item_id===v.id && c.connection_type==='primary');
+    const parent = parentConn ? vehicles.find(p=>p.id===parentConn.vehicle_id) : null;
+
     return '<div class="vehicle-card">' +
       '<span class="type-badge">' + typeLabel(v.type) + '</span>' +
-      '<h4>' + (v.name||'Unnamed') + '</h4>' +
+      '<div class="nickname">' + nick + '</div>' +
+      (showFull ? '<div class="full-name">' + v.name + '</div>' : '') +
       '<div class="vehicle-details">' +
         (v.make ? '<strong>Make:</strong> ' + v.make + '<br>' : '') +
         (v.model ? '<strong>Model:</strong> ' + v.model + '<br>' : '') +
@@ -661,66 +713,37 @@
         (v.engine_type ? '<strong>Engine:</strong> ' + v.engine_type + '<br>' : '') +
         (v.hull_vin ? '<strong>Hull/VIN:</strong> ' + v.hull_vin : '') +
       '</div>' +
-      (parent ? '<div class="connection-badge" onclick="jumpToVehicle(\'' + parent.id + '\')">🔗 Connected to: ' + parent.name + ' →</div>' : '') +
+      (parent ? '<div style="font-size:0.82rem;color:var(--wave);margin-bottom:0.5rem;">🔗 Connected to: <span style="cursor:pointer;text-decoration:underline;" onclick="openVehicleDetail(\'' + parent.id + '\')">' + displayName(parent) + '</span></div>' : '') +
+      (connectedItems.length ?
+        '<div class="connected-items">' +
+        '<div style="font-size:0.72rem;font-weight:700;color:var(--stone);text-transform:uppercase;margin-bottom:0.3rem;">Connected Equipment</div>' +
+        connectedItems.map(a =>
+          '<div class="connected-item-row" onclick="openVehicleDetail(\'' + a.id + '\')">' +
+          '🔩 <span>' + displayName(a) + '</span><span style="color:var(--stone);font-size:0.8rem;"> (' + typeLabel(a.type) + ')</span>' +
+          '<span style="margin-left:auto;font-size:0.75rem;">View →</span></div>'
+        ).join('') + '</div>' : '') +
       '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">' +
         '<button class="btn btn-primary btn-sm" onclick="openVehicleDetail(\'' + v.id + '\')">📋 View</button>' +
-        '<button class="btn btn-primary btn-sm" style="background:var(--wave);" onclick="openEditModal(\'' + v.id + '\')">✏️ Edit</button>' +
-        '<button class="btn btn-danger btn-sm" onclick="deleteVehicle(\'' + v.id + '\',\'' + name + '\')">🗑 Delete</button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function renderVehicles() {
-    const grid = document.getElementById('vehicleGrid');
-    const list = vehicles.filter(v => !isAccessory(v.type));
-    grid.innerHTML = list.length
-      ? list.map(v => vehicleCard(v, false)).join('')
-      : '<div class="empty-state"><p>No vehicles yet. Click + Add Vehicle to get started.</p></div>';
-  }
-
-  function renderAccessories() {
-    const grid = document.getElementById('accessoryGrid');
-    if (!grid) return;
-    const list = vehicles.filter(v => isAccessory(v.type));
-    grid.innerHTML = list.length
-      ? list.map(v => vehicleCard(v, true)).join('')
-      : '<div class="empty-state"><p>No accessories yet.</p></div>';
-  }
-
-  function jumpToVehicle(id) {
-    showTab('vehicles', document.querySelector('.nav-tabs button'));
-    setTimeout(() => {
-      const v = vehicles.find(v => v.id===id);
-      if (!v) return;
-      document.querySelectorAll('#vehicleGrid .vehicle-card').forEach(card => {
-        if (card.querySelector('h4')&&card.querySelector('h4').textContent===v.name) {
-          card.scrollIntoView({behavior:'smooth',block:'center'});
-          card.style.boxShadow = '0 0 0 3px var(--accent)';
-          setTimeout(() => { card.style.boxShadow=''; }, 2000);
-        }
-      });
-    }, 150);
+        '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\'' + v.id + '\')">✏️ Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteVehicle(\'' + v.id + '\',\'' + safeName + '\')">🗑</button>' +
+      '</div></div>';
   }
 
   function populateSelects() {
     const allOpts = '<option value="">Choose a vehicle...</option>' +
-      vehicles.map(v => '<option value="' + v.id + '">' + v.name + '</option>').join('');
+      vehicles.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
     const filterOpts = '<option value="">All Vehicles</option>' +
-      vehicles.map(v => '<option value="' + v.id + '">' + v.name + '</option>').join('');
-    const connOpts = '<option value="">None</option>' +
-      vehicles.filter(v => !isAccessory(v.type)).map(v => '<option value="' + v.id + '">' + v.name + '</option>').join('');
-
+      vehicles.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
+    const connOpts = '<option value="">No connection</option>' +
+      vehicles.filter(v=>!isAccessory(v.type)).map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
     ['docVehicleSelect','checklistVehicle','advisorVehicle','mVehicle','rVehicle'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = allOpts;
+      const el = document.getElementById(id); if (el) el.innerHTML = allOpts;
     });
-    const fv = document.getElementById('filterVehicle');
-    if (fv) fv.innerHTML = filterOpts;
-    const ct = document.getElementById('vConnectedTo');
-    if (ct) ct.innerHTML = connOpts;
+    const fv = document.getElementById('filterVehicle'); if (fv) fv.innerHTML = filterOpts;
+    const ct = document.getElementById('vConnectedTo'); if (ct) ct.innerHTML = connOpts;
   }
 
-  // ── ADD / EDIT VEHICLE MODAL ───────────────────────────────────
+  // ── ADD / EDIT VEHICLE ─────────────────────────────────────────
   function openAddModal() {
     clearVehicleForm();
     document.getElementById('vehicleModalTitle').textContent = 'Add Vehicle';
@@ -730,45 +753,39 @@
   }
 
   function openEditModal(id) {
-    const v = vehicles.find(v => v.id===id);
-    if (!v) return;
+    const v = vehicles.find(v=>v.id===id); if (!v) return;
     clearVehicleForm();
     document.getElementById('vehicleModalTitle').textContent = 'Edit Vehicle';
     document.getElementById('editId').value = v.id;
+    document.getElementById('vNickname').value = v.nickname||'';
     document.getElementById('vName').value = v.name||'';
     const knownTypes = ['boat','snowmobile','jet_ski','truck','atv','trailer','fish_finder','boat_lift','other'];
     if (v.type && !knownTypes.includes(v.type)) {
       document.getElementById('vType').value = 'other';
       document.getElementById('vTypeCustom').value = v.type;
       document.getElementById('vTypeCustom').style.display = 'block';
-    } else {
-      document.getElementById('vType').value = v.type||'';
-    }
+    } else { document.getElementById('vType').value = v.type||''; }
     document.getElementById('vMake').value = v.make||'';
     document.getElementById('vModel').value = v.model||'';
     document.getElementById('vYear').value = v.year||'';
     document.getElementById('vEngine').value = v.engine_type||'';
     document.getElementById('vHull').value = v.hull_vin||'';
     document.getElementById('vNotes').value = v.notes||'';
-
     if (isAccessory(v.type)) {
       document.getElementById('connectedToGroup').style.display = 'block';
-      const primary = connections.find(c => c.item_id===v.id && c.connection_type==='primary');
-      document.getElementById('vConnectedTo').value = primary ? primary.vehicle_id : '';
+      populateSelects();
+      const primary = connections.find(c=>c.item_id===v.id && c.connection_type==='primary');
+      setTimeout(() => { document.getElementById('vConnectedTo').value = primary ? primary.vehicle_id : ''; }, 50);
     }
-
     goStep('manual');
     document.getElementById('backBtn').style.display = 'none';
     document.getElementById('vehicleModal').classList.add('active');
   }
 
-  function closeVehicleModal() {
-    closeModal('vehicleModal');
-    clearVehicleForm();
-  }
+  function closeVehicleModal() { closeModal('vehicleModal'); clearVehicleForm(); }
 
   function clearVehicleForm() {
-    ['vName','vMake','vModel','vYear','vEngine','vHull','vNotes'].forEach(id => {
+    ['vNickname','vName','vMake','vModel','vYear','vEngine','vHull','vNotes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
     document.getElementById('vType').value = '';
@@ -776,8 +793,7 @@
     document.getElementById('vTypeCustom').style.display = 'none';
     document.getElementById('connectedToGroup').style.display = 'none';
     document.getElementById('editId').value = '';
-    document.getElementById('scanDocInput').value = '';
-    document.getElementById('scanPhotoInput').value = '';
+    ['scanDocInput','scanPhotoInput'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('scanDocProcessing').style.display = 'none';
     document.getElementById('scanDocResult').style.display = 'none';
     document.getElementById('scanDocResult').innerHTML = '';
@@ -788,41 +804,32 @@
   }
 
   function goStep(step) {
-    ['step1','step-manual','step-doc','step-photo'].forEach(id => {
-      document.getElementById(id).style.display = 'none';
-    });
-    if (step === 'choose') {
-      document.getElementById('step1').style.display = 'block';
-    } else if (step === 'manual') {
-      document.getElementById('step-manual').style.display = 'block';
-      document.getElementById('backBtn').style.display = 'inline-block';
-    } else if (step === 'doc') {
-      document.getElementById('step-doc').style.display = 'block';
-    } else if (step === 'photo') {
-      document.getElementById('step-photo').style.display = 'block';
-    }
+    ['step1','step-manual','step-doc','step-photo'].forEach(id => { document.getElementById(id).style.display='none'; });
+    if (step==='choose') document.getElementById('step1').style.display='block';
+    else if (step==='manual') { document.getElementById('step-manual').style.display='block'; document.getElementById('backBtn').style.display='inline-block'; }
+    else if (step==='doc') document.getElementById('step-doc').style.display='block';
+    else if (step==='photo') document.getElementById('step-photo').style.display='block';
   }
 
   function onTypeChange() {
     const t = document.getElementById('vType').value;
     document.getElementById('vTypeCustom').style.display = t==='other' ? 'block' : 'none';
     document.getElementById('connectedToGroup').style.display = isAccessory(t) ? 'block' : 'none';
+    if (isAccessory(t)) populateSelects();
   }
 
   function getType() {
     const t = document.getElementById('vType').value;
-    if (t === 'other') return document.getElementById('vTypeCustom').value.trim() || 'other';
-    return t;
+    return t==='other' ? (document.getElementById('vTypeCustom').value.trim()||'other') : t;
   }
 
   async function saveVehicle() {
     const name = document.getElementById('vName').value.trim();
     const type = getType();
-    if (!name) { showToast('Vehicle name is required.', 'error'); return; }
-
+    if (!name) { showToast('Full name is required.', 'error'); return; }
     const id = document.getElementById('editId').value;
     const row = {
-      name, type,
+      name, nickname: document.getElementById('vNickname').value.trim()||null, type,
       make: document.getElementById('vMake').value.trim()||null,
       model: document.getElementById('vModel').value.trim()||null,
       year: document.getElementById('vYear').value ? parseInt(document.getElementById('vYear').value) : null,
@@ -831,41 +838,37 @@
       notes: document.getElementById('vNotes').value.trim()||null,
       specifications: {}, concerns: []
     };
-
     try {
       if (id) {
         await sbUpdate('FleetVehicles', id, row);
-        // Update connections
         if (isAccessory(type)) {
-          const existing = connections.filter(c => c.item_id===id);
+          const existing = connections.filter(c=>c.item_id===id);
           for (const c of existing) await sbDelete('FleetConnections', c.id).catch(()=>{});
-          const primaryId = document.getElementById('vConnectedTo').value;
-          if (primaryId) await sbInsert('FleetConnections',{id:genId(),item_id:id,vehicle_id:primaryId,connection_type:'primary'});
+          const pid = document.getElementById('vConnectedTo').value;
+          if (pid) await sbInsert('FleetConnections',{id:genId(),item_id:id,vehicle_id:pid,connection_type:'primary'});
         }
         showToast('Vehicle updated!');
       } else {
         row.id = genId();
         await sbInsert('FleetVehicles', row);
-        // Save connection
         if (isAccessory(type)) {
-          const primaryId = document.getElementById('vConnectedTo').value;
-          if (primaryId) await sbInsert('FleetConnections',{id:genId(),item_id:row.id,vehicle_id:primaryId,connection_type:'primary'});
+          const pid = document.getElementById('vConnectedTo').value;
+          if (pid) await sbInsert('FleetConnections',{id:genId(),item_id:row.id,vehicle_id:pid,connection_type:'primary'});
         }
         showToast('Vehicle saved!');
       }
-      closeVehicleModal();
-      loadAll();
+      closeVehicleModal(); loadAll();
     } catch(err) { showToast('Error: ' + err.message, 'error'); }
   }
 
   function deleteVehicle(id, name) {
-    if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+    if (!confirm('Delete "' + name + '"? All maintenance, documents, and checklists for this vehicle will also be deleted.')) return;
     sbDelete('FleetVehicles', id)
       .then(() => { showToast(name + ' deleted.'); loadAll(); })
       .catch(err => showToast('Delete failed: ' + err.message, 'error'));
   }
 
-  // ── AI SCAN — DOCUMENT ─────────────────────────────────────────
+  // ── AI SCAN ────────────────────────────────────────────────────
   async function handleScanDoc(event) {
     const file = event.target.files[0]; if (!file) return;
     document.getElementById('docUploadArea').style.display = 'none';
@@ -903,15 +906,16 @@
     el.style.display = 'block';
     const fields = [['Name',result.name],['Type',result.type],['Make',result.make],
       ['Model',result.model],['Year',result.year],['Engine',result.engine_type],['Hull/VIN',result.hull_vin]
-    ].filter(([,v]) => v);
+    ].filter(([,v])=>v);
     el.innerHTML =
       '<div class="extracted-preview"><h4>🤖 AI Extracted — Verify</h4>' +
-      fields.map(([k,v]) => '<div class="extracted-field"><span>' + k + '</span><span>' + v + '</span></div>').join('') +
+      fields.map(([k,v])=>'<div class="extracted-field"><span>'+k+'</span><span>'+v+'</span></div>').join('') +
       '</div>' +
-      '<div class="form-group"><label>Edit Name</label><input type="text" id="aiName" value="' + (result.name||'') + '"></div>' +
+      '<div class="form-group"><label>Nickname (optional)</label><input type="text" id="aiNickname" placeholder="What do you call it?"></div>' +
+      '<div class="form-group"><label>Full Name</label><input type="text" id="aiName" value="' + (result.name||'') + '"></div>' +
       '<div class="form-group"><label>Notes</label><textarea id="aiNotes" style="min-height:60px">' + (result.notes||'') + '</textarea></div>' +
       '<div class="modal-buttons">' +
-        '<button class="btn btn-secondary" onclick="goStep(\'choose\')">Start Over</button>' +
+        '<button class="btn btn-ghost" onclick="goStep(\'choose\')">Start Over</button>' +
         '<button class="btn btn-primary" onclick="saveScannedVehicle(' + JSON.stringify(result).replace(/"/g,'&quot;') + ')">Save Vehicle</button>' +
       '</div>';
   }
@@ -920,11 +924,12 @@
     const name = document.getElementById('aiName').value.trim() || result.name;
     if (!name) { showToast('Name required.', 'error'); return; }
     const row = {
-      id: genId(), name, type: result.type||'other',
-      make: result.make||null, model: result.model||null, year: result.year||null,
-      engine_type: result.engine_type||null, hull_vin: result.hull_vin||null,
-      notes: document.getElementById('aiNotes').value.trim()||result.notes||null,
-      specifications: {}, concerns: []
+      id:genId(), name,
+      nickname: document.getElementById('aiNickname').value.trim()||null,
+      type:result.type||'other', make:result.make||null, model:result.model||null,
+      year:result.year||null, engine_type:result.engine_type||null, hull_vin:result.hull_vin||null,
+      notes:document.getElementById('aiNotes').value.trim()||result.notes||null,
+      specifications:{}, concerns:[]
     };
     try {
       await sbInsert('FleetVehicles', row);
@@ -933,352 +938,444 @@
   }
 
   // ── MAINTENANCE ────────────────────────────────────────────────
+  function toggleSort() {
+    maintSortDesc = !maintSortDesc;
+    document.getElementById('sortBtn').textContent = maintSortDesc ? '↓ Newest First' : '↑ Oldest First';
+    renderMaintenance();
+  }
+
   function loadMaintenance() {
-    sbGet('FleetMaintenanceLog','order=created_at.desc')
+    sbGet('FleetMaintenanceLog','order=date.desc')
       .then(data => {
         maintenanceLog = Array.isArray(data) ? data : [];
         renderMaintenance();
-        // If vehicle detail modal is open, refresh its maintenance list too
         if (currentDetailVehicleId) loadDetailMaintenance(currentDetailVehicleId);
       })
       .catch(() => { maintenanceLog = []; renderMaintenance(); });
   }
 
   function renderMaintenance() {
-    const list = document.getElementById('maintenanceList');
+    const list = document.getElementById('maintenanceList'); if (!list) return;
     const fv = document.getElementById('filterVehicle').value;
     const ft = document.getElementById('filterType').value;
-    let items = maintenanceLog;
-    if (fv) items = items.filter(e => e.vehicle_id===fv);
-    if (ft) items = items.filter(e => e.maintenance_type===ft);
-    if (!items.length) {
-      list.innerHTML = '<div class="empty-state"><p>No entries yet.</p></div>'; return;
-    }
-    const vName = id => { const v = vehicles.find(v => v.id===id); return v ? v.name : 'Unknown'; };
+    let items = maintenanceLog.filter(e => (!fv||e.vehicle_id===fv) && (!ft||e.maintenance_type===ft));
+    items.sort((a,b) => {
+      const da = a.date ? new Date(a.date) : new Date(0);
+      const db = b.date ? new Date(b.date) : new Date(0);
+      return maintSortDesc ? db-da : da-db;
+    });
+    if (!items.length) { list.innerHTML='<div class="empty-state"><p>No entries yet.</p></div>'; return; }
+    const vName = id => { const v=vehicles.find(v=>v.id===id); return v?displayName(v):'Unknown'; };
     list.innerHTML = items.map(e =>
-      '<div class="maint-item"><div class="header"><div>' +
-        '<span class="type-badge" style="background:var(--wave);">' + maintTypeLabel(e.maintenance_type) + '</span>' +
-        '<h4 style="margin-top:0.3rem;">' + vName(e.vehicle_id) + '</h4>' +
-      '</div><div style="text-align:right;">' +
-        '<div style="font-size:0.85rem;color:var(--stone);">' + (e.date ? formatDate(e.date) : (e.season_year||'')) + '</div>' +
-        (e.cost ? '<div style="font-weight:700;color:var(--accent);">' + fmtCost(e.cost) + '</div>' : '') +
-      '</div></div>' +
-        '<div style="font-size:0.9rem;margin:0.25rem 0;">' + (e.description||'') + '</div>' +
-        (e.completed_by ? '<div style="font-size:0.82rem;color:var(--stone);">By: ' + e.completed_by + '</div>' : '') +
+      '<div class="maint-item">' +
+        '<div class="maint-item-top">' +
+          '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">' +
+            '<span class="type-badge" style="background:var(--wave);margin:0;">' + maintTypeLabel(e.maintenance_type) + '</span>' +
+            '<span style="font-size:0.85rem;color:var(--stone);font-weight:600;">' + vName(e.vehicle_id) + '</span>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<div class="maint-item-date">' + (e.date?formatDate(e.date):(e.season_year||'No date')) + '</div>' +
+            (e.cost?'<div class="maint-item-cost">'+fmtCost(e.cost)+'</div>':'') +
+          '</div>' +
+        '</div>' +
+        '<div class="maint-item-desc">' + (e.description||'') + '</div>' +
+        (e.completed_by?'<div class="maint-item-meta">By: '+e.completed_by+'</div>':'') +
       '</div>'
     ).join('');
   }
 
-  function openMaintenanceModal() {
-    document.getElementById('maintenanceModal').classList.add('active');
-    populateSelects();
+  function openMaintenanceModal() { populateSelects(); document.getElementById('maintenanceModal').classList.add('active'); }
+  function openMaintenanceModalForVehicle(vehicleId) {
+    openMaintenanceModal();
+    setTimeout(() => { document.getElementById('mVehicle').value = vehicleId; }, 100);
   }
 
   async function saveMaintenance() {
     const vehicleId = document.getElementById('mVehicle').value;
     const type = document.getElementById('mType').value;
     const desc = document.getElementById('mDesc').value.trim();
-    if (!vehicleId || !type || !desc) { showToast('Vehicle, type, and description are required.', 'error'); return; }
+    if (!vehicleId||!type||!desc) { showToast('Vehicle, type, and description required.','error'); return; }
     try {
       await sbInsert('FleetMaintenanceLog', {
-        id: genId(), vehicle_id: vehicleId, maintenance_type: type,
-        date: document.getElementById('mDate').value||null,
-        season_year: document.getElementById('mSeason').value.trim()||null,
-        description: desc,
-        cost: document.getElementById('mCost').value ? parseFloat(document.getElementById('mCost').value) : null,
-        completed_by: document.getElementById('mBy').value.trim()||null
+        id:genId(), vehicle_id:vehicleId, maintenance_type:type,
+        date:document.getElementById('mDate').value||null,
+        season_year:document.getElementById('mSeason').value.trim()||null,
+        description:desc,
+        cost:document.getElementById('mCost').value?parseFloat(document.getElementById('mCost').value):null,
+        completed_by:document.getElementById('mBy').value.trim()||null
       });
-      closeModal('maintenanceModal');
-      showToast('Entry saved!');
+      closeModal('maintenanceModal'); showToast('Entry saved!');
       loadMaintenance();
-      ['mVehicle','mType','mDate','mSeason','mDesc','mCost','mBy'].forEach(id => { document.getElementById(id).value=''; });
-    } catch(err) { showToast('Error: ' + err.message, 'error'); }
+      ['mVehicle','mType','mDate','mSeason','mDesc','mCost','mBy'].forEach(id=>{document.getElementById(id).value='';});
+    } catch(err) { showToast('Error: '+err.message,'error'); }
   }
 
   // ── RECEIPT SCAN ───────────────────────────────────────────────
   function openReceiptModal() {
     populateSelects();
-    document.getElementById('receiptStep1').style.display = 'block';
-    document.getElementById('receiptProcessing').style.display = 'none';
-    document.getElementById('receiptResult').style.display = 'none';
-    document.getElementById('receiptCancel').style.display = 'flex';
+    document.getElementById('receiptStep1').style.display='block';
+    document.getElementById('receiptProcessing').style.display='none';
+    document.getElementById('receiptResult').style.display='none';
+    document.getElementById('receiptCancel').style.display='flex';
     document.getElementById('receiptModal').classList.add('active');
   }
 
   async function handleReceiptScan(event) {
     const file = event.target.files[0]; if (!file) return;
     const vehicleId = document.getElementById('rVehicle').value;
-    if (!vehicleId) { showToast('Select a vehicle first.', 'error'); event.target.value=''; return; }
-    document.getElementById('receiptStep1').style.display = 'none';
-    document.getElementById('receiptCancel').style.display = 'none';
-    document.getElementById('receiptProcessing').style.display = 'block';
+    if (!vehicleId) { showToast('Select a vehicle first.','error'); event.target.value=''; return; }
+    document.getElementById('receiptStep1').style.display='none';
+    document.getElementById('receiptCancel').style.display='none';
+    document.getElementById('receiptProcessing').style.display='block';
     try {
       const base64 = await fileToBase64(file);
       const r = await callClaude('extractReceipt', base64, file.type);
-      document.getElementById('receiptProcessing').style.display = 'none';
-      document.getElementById('receiptResult').style.display = 'block';
-      if (r.date) document.getElementById('rDate').value = r.date;
-      if (r.cost) document.getElementById('rCost').value = r.cost;
-      if (r.description) document.getElementById('rDesc').value = r.description;
-      if (r.completed_by) document.getElementById('rBy').value = r.completed_by;
-      if (r.maintenance_type) document.getElementById('rType').value = r.maintenance_type;
+      document.getElementById('receiptProcessing').style.display='none';
+      document.getElementById('receiptResult').style.display='block';
+      if (r.date) document.getElementById('rDate').value=r.date;
+      if (r.cost) document.getElementById('rCost').value=r.cost;
+      if (r.description) document.getElementById('rDesc').value=r.description;
+      if (r.completed_by) document.getElementById('rBy').value=r.completed_by;
+      if (r.maintenance_type) document.getElementById('rType').value=r.maintenance_type;
     } catch(err) {
-      document.getElementById('receiptProcessing').style.display = 'none';
-      document.getElementById('receiptStep1').style.display = 'block';
-      document.getElementById('receiptCancel').style.display = 'flex';
-      showToast('Could not read receipt: ' + err.message, 'error');
+      document.getElementById('receiptProcessing').style.display='none';
+      document.getElementById('receiptStep1').style.display='block';
+      document.getElementById('receiptCancel').style.display='flex';
+      showToast('Could not read receipt: '+err.message,'error');
     }
-    event.target.value = '';
+    event.target.value='';
   }
 
   async function saveReceiptEntry() {
     const vehicleId = document.getElementById('rVehicle').value;
     const desc = document.getElementById('rDesc').value.trim();
-    if (!desc) { showToast('Description required.', 'error'); return; }
+    if (!desc) { showToast('Description required.','error'); return; }
     try {
       await sbInsert('FleetMaintenanceLog', {
-        id: genId(), vehicle_id: vehicleId,
-        maintenance_type: document.getElementById('rType').value||'other',
-        date: document.getElementById('rDate').value||null, season_year: null,
-        description: desc,
-        cost: document.getElementById('rCost').value ? parseFloat(document.getElementById('rCost').value) : null,
-        completed_by: document.getElementById('rBy').value.trim()||null
+        id:genId(), vehicle_id:vehicleId,
+        maintenance_type:document.getElementById('rType').value||'other',
+        date:document.getElementById('rDate').value||null, season_year:null,
+        description:desc,
+        cost:document.getElementById('rCost').value?parseFloat(document.getElementById('rCost').value):null,
+        completed_by:document.getElementById('rBy').value.trim()||null
       });
       closeModal('receiptModal'); showToast('Receipt logged!'); loadMaintenance();
-    } catch(err) { showToast('Error: ' + err.message, 'error'); }
+    } catch(err) { showToast('Error: '+err.message,'error'); }
   }
 
-  // ── DOCUMENTS ──────────────────────────────────────────────────
-  function onDocVehicleChange() {
-    const id = document.getElementById('docVehicleSelect').value;
-    document.getElementById('docActions').style.display = id ? 'block' : 'none';
-    document.getElementById('docList').innerHTML = '';
-    if (!id) return;
-    sbGet('FleetDocuments', 'vehicle_id=eq.' + id + '&order=uploaded_date.desc')
-      .then(data => renderDocs(Array.isArray(data) ? data : []))
-      .catch(() => {});
-  }
-
-  function renderDocs(docs) {
-    const list = document.getElementById('docList');
-    if (!docs.length) {
-      list.innerHTML = '<p style="color:var(--stone);padding:0.75rem 0;">No documents yet. Upload files or link an online manual above.</p>';
-      return;
-    }
-    const tl = {manual:'Manual',parts_diagram:'Parts',spec_sheet:'Spec Sheet',vehicle_info:'Vehicle Info',
-      maintenance_receipt:'Receipt',url_link:'Online Manual',other:'Document'};
-    list.innerHTML = docs.map(d => {
-      const isUrl = d.document_type === 'url_link';
-      const label = tl[d.document_type] || d.document_type || 'Document';
-      const notes = (d.extracted_data && (d.extracted_data.summary || d.extracted_data.notes)) || '';
-      return '<div class="doc-item">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">' +
-          '<div>' +
-            '<span class="type-badge" style="background:' + (isUrl?'var(--accent)':'var(--wave)') + ';">' + (isUrl?'🔗':'📄') + ' ' + label + '</span>' +
-            '<h4 style="margin-top:0.3rem;">' + d.file_name + '</h4>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:0.5rem;">' +
-            '<span style="font-size:0.8rem;color:var(--stone);">' + formatDate(d.uploaded_date) + '</span>' +
-            '<button class="btn btn-danger btn-sm" onclick="deleteDoc(\'' + d.id + '\')">🗑</button>' +
-          '</div>' +
-        '</div>' +
-        (d.file_url ? '<a href="' + d.file_url + '" target="_blank" rel="noopener" style="font-size:0.85rem;color:var(--water);font-weight:600;">' + (isUrl?'Open Manual →':'View File →') + '</a>' : '') +
-        (notes ? '<div style="font-size:0.82rem;color:var(--stone);margin-top:0.35rem;">' + notes + '</div>' : '') +
-      '</div>';
-    }).join('');
-  }
-
+  // ── FILE UPLOADS ───────────────────────────────────────────────
   async function handleFileUpload(event) {
-    const files = Array.from(event.target.files);
-    if (!files.length) return;
+    const files = Array.from(event.target.files); if (!files.length) return;
     const vehicleId = document.getElementById('docVehicleSelect').value;
-    if (!vehicleId) { showToast('Select a vehicle first.', 'error'); event.target.value=''; return; }
+    if (!vehicleId) { showToast('Select a vehicle first.','error'); event.target.value=''; return; }
     await processFileUploads(files, vehicleId, false);
-    event.target.value = '';
+    event.target.value='';
   }
 
   async function handleDetailFileUpload(event) {
-    const files = Array.from(event.target.files);
-    if (!files.length) return;
-    const vehicleId = currentDetailVehicleId;
-    if (!vehicleId) return;
-    await processFileUploads(files, vehicleId, true);
-    event.target.value = '';
+    const files = Array.from(event.target.files); if (!files.length) return;
+    if (!currentDetailVehicleId) return;
+    await processFileUploads(files, currentDetailVehicleId, true);
+    event.target.value='';
   }
 
   async function processFileUploads(files, vehicleId, fromDetail) {
     const prog = fromDetail ? document.getElementById('detailUploadProgress') : document.getElementById('uploadProgress');
     const msg = fromDetail ? document.getElementById('detailUploadMsg') : document.getElementById('uploadMsg');
-    if (prog) prog.style.display = 'block';
+    if (prog) prog.style.display='block';
 
-    let pendingReceipt = null; // hold one receipt for confirmation modal
+    let pendingReceipt = null, pendingFieldUpdates = null;
 
     for (let i=0; i<files.length; i++) {
       const file = files[i];
       if (msg) msg.textContent = 'Analyzing ' + (i+1) + ' of ' + files.length + ': ' + file.name + '...';
 
-      // Detect if it looks like a receipt
-      const lname = file.name.toLowerCase();
-      const isReceiptName = lname.includes('receipt') || lname.includes('invoice') || lname.includes('bill');
-
-      let extractedData = {};
-      let isReceipt = false;
-      let receiptResult = null;
+      let fileUrl='', extractedData={}, docType='manual', isReceipt=false, receiptResult=null;
 
       try {
         const base64 = await fileToBase64(file);
 
-        // Always try receipt extraction first for PDFs/images that might be receipts
-        // We'll ask the AI to determine the doc type
+        // Try receipt extraction
         try {
           receiptResult = await callClaude('extractReceipt', base64, file.type);
-          // If AI found a description with real content, treat as receipt
-          if (receiptResult && receiptResult.description && receiptResult.description.length > 10) {
-            isReceipt = true;
-            extractedData = { summary: receiptResult.description, notes: null };
+          if (receiptResult && receiptResult.description && receiptResult.description.length > 15) {
+            isReceipt=true; docType='maintenance_receipt';
+            extractedData = {summary: receiptResult.description, notes:null};
           }
-        } catch(e) { /* not a receipt */ }
+        } catch(e) {}
 
-        // If not identified as receipt, try vehicle doc extraction for summaries
+        // If not receipt, try vehicle doc extraction + field updates
         if (!isReceipt) {
           try {
             const vResult = await callClaude('extractVehicleDocument', base64, file.type);
             if (vResult) {
               extractedData = {
-                summary: [vResult.name,vResult.make,vResult.model,vResult.year,vResult.engine_type].filter(Boolean).join(' · '),
-                notes: vResult.notes||null
+                summary:[vResult.name,vResult.make,vResult.model,vResult.year,vResult.engine_type].filter(Boolean).join(' · '),
+                notes:vResult.notes||null
               };
+              const v = vehicles.find(v=>v.id===vehicleId);
+              if (v) {
+                const updates = buildFieldUpdates(v, vResult);
+                if (updates.length > 0) pendingFieldUpdates = {vehicleId, updates};
+              }
+              const lname = file.name.toLowerCase();
+              docType = lname.includes('title')||lname.includes('registration') ? 'vehicle_info' : 'manual';
             }
           } catch(e) {}
         }
-      } catch(e) { /* save without analysis */ }
 
-      const docType = isReceipt ? 'maintenance_receipt'
-        : lname.includes('manual') ? 'manual'
-        : lname.includes('title') || lname.includes('registration') ? 'vehicle_info'
-        : 'manual';
+        // Upload file to Supabase Storage
+        try {
+          if (msg) msg.textContent = 'Uploading ' + file.name + '...';
+          fileUrl = await uploadToStorage(file, vehicleId);
+        } catch(e) { fileUrl=''; } // continue without storage URL
+      } catch(e) {}
 
-      // Save the document record
-      const docId = genId();
       try {
         await sbInsert('FleetDocuments', {
-          id: docId, vehicle_id: vehicleId,
-          file_name: file.name, file_url: '',
-          document_type: docType,
-          file_size_bytes: file.size||null,
-          extracted_data: extractedData
+          id:genId(), vehicle_id:vehicleId, file_name:file.name,
+          file_url:fileUrl, document_type:docType, file_size_bytes:file.size||null,
+          extracted_data:extractedData
         });
-      } catch(e) { showToast('Error saving ' + file.name, 'error'); continue; }
+      } catch(e) { showToast('Error saving '+file.name,'error'); continue; }
 
-      // If it's a receipt, queue it for the confirmation modal
-      if (isReceipt && receiptResult) {
-        pendingReceipt = { vehicleId, fileName: file.name, result: receiptResult };
-      }
+      if (isReceipt && receiptResult && !pendingReceipt) pendingReceipt = {vehicleId, result:receiptResult};
     }
 
-    if (prog) prog.style.display = 'none';
-    showToast(files.length === 1 ? files[0].name + ' saved!' : files.length + ' files saved!');
+    if (prog) prog.style.display='none';
+    showToast(files.length===1 ? files[0].name+' saved!' : files.length+' files saved!');
+    if (fromDetail) loadDetailDocuments(vehicleId); else onDocVehicleChange();
 
-    // Refresh document lists
-    if (fromDetail) {
-      loadDetailDocuments(vehicleId);
-    } else {
-      onDocVehicleChange();
-    }
-
-    // Show receipt confirmation modal if we found receipt data
     if (pendingReceipt) {
-      setTimeout(() => {
-        if (fromDetail) closeModal('vehicleDetailModal');
-        openReceiptConfirm(pendingReceipt.vehicleId, pendingReceipt.fileName, pendingReceipt.result, fromDetail);
-      }, 300);
+      if (fromDetail) closeModal('vehicleDetailModal');
+      setTimeout(() => openReceiptConfirm(pendingReceipt.vehicleId, pendingReceipt.result), 300);
+    } else if (pendingFieldUpdates) {
+      if (fromDetail) closeModal('vehicleDetailModal');
+      setTimeout(() => openFieldUpdateModal(pendingFieldUpdates.vehicleId, pendingFieldUpdates.updates), 300);
     }
   }
 
-  // ── RECEIPT CONFIRM (from document upload) ─────────────────────
-  let receiptConfirmFromDetail = false;
+  function buildFieldUpdates(vehicle, extracted) {
+    return [
+      {key:'make',label:'Make',extracted:extracted.make},
+      {key:'model',label:'Model',extracted:extracted.model},
+      {key:'year',label:'Year',extracted:extracted.year},
+      {key:'engine_type',label:'Engine',extracted:extracted.engine_type},
+      {key:'hull_vin',label:'Hull/VIN',extracted:extracted.hull_vin},
+    ].filter(f => {
+      if (!f.extracted) return false;
+      const cur = vehicle[f.key];
+      if (!cur) return true;
+      return String(cur).trim().toLowerCase() !== String(f.extracted).trim().toLowerCase();
+    });
+  }
 
-  function openReceiptConfirm(vehicleId, fileName, result, fromDetail) {
-    receiptConfirmFromDetail = fromDetail;
+  // ── RECEIPT CONFIRM ────────────────────────────────────────────
+  function openReceiptConfirm(vehicleId, result) {
     document.getElementById('rcVehicleId').value = vehicleId;
-    document.getElementById('rcFileName').value = fileName;
-    if (result.maintenance_type) document.getElementById('rcType').value = result.maintenance_type;
-    document.getElementById('rcDate').value = result.date||'';
-    document.getElementById('rcCost').value = result.cost||'';
-    document.getElementById('rcDesc').value = result.description||'';
-    document.getElementById('rcBy').value = result.completed_by||'';
+    if (result.maintenance_type) document.getElementById('rcType').value=result.maintenance_type;
+    document.getElementById('rcDate').value=result.date||'';
+    document.getElementById('rcCost').value=result.cost||'';
+    document.getElementById('rcDesc').value=result.description||'';
+    document.getElementById('rcBy').value=result.completed_by||'';
     document.getElementById('receiptConfirmModal').classList.add('active');
   }
 
   function reopenVehicleDetail() {
-    if (receiptConfirmFromDetail && currentDetailVehicleId) {
-      setTimeout(() => openVehicleDetail(currentDetailVehicleId), 200);
-    }
+    if (currentDetailVehicleId) setTimeout(()=>openVehicleDetail(currentDetailVehicleId),200);
   }
 
   async function saveReceiptConfirm() {
     const vehicleId = document.getElementById('rcVehicleId').value;
     const desc = document.getElementById('rcDesc').value.trim();
-    if (!desc) { showToast('Description required.', 'error'); return; }
+    if (!desc) { showToast('Description required.','error'); return; }
     try {
       await sbInsert('FleetMaintenanceLog', {
-        id: genId(), vehicle_id: vehicleId,
-        maintenance_type: document.getElementById('rcType').value||'other',
-        date: document.getElementById('rcDate').value||null, season_year: null,
-        description: desc,
-        cost: document.getElementById('rcCost').value ? parseFloat(document.getElementById('rcCost').value) : null,
-        completed_by: document.getElementById('rcBy').value.trim()||null
+        id:genId(), vehicle_id:vehicleId,
+        maintenance_type:document.getElementById('rcType').value||'other',
+        date:document.getElementById('rcDate').value||null, season_year:null,
+        description:desc,
+        cost:document.getElementById('rcCost').value?parseFloat(document.getElementById('rcCost').value):null,
+        completed_by:document.getElementById('rcBy').value.trim()||null
       });
-      // Refresh maintenance data
-      const data = await sbGet('FleetMaintenanceLog','order=created_at.desc');
-      maintenanceLog = Array.isArray(data) ? data : [];
-      renderMaintenance();
+      await loadMaintenance();
       closeModal('receiptConfirmModal');
       showToast('✅ Receipt logged to maintenance!');
-      if (receiptConfirmFromDetail) {
-        setTimeout(() => openVehicleDetail(vehicleId), 200);
-      }
-    } catch(err) { showToast('Error: ' + err.message, 'error'); }
+      reopenVehicleDetail();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+  }
+
+  // ── FIELD UPDATE MODAL ─────────────────────────────────────────
+  function openFieldUpdateModal(vehicleId, updates) {
+    const v = vehicles.find(v=>v.id===vehicleId);
+    document.getElementById('fuVehicleId').value = vehicleId;
+    document.getElementById('fieldUpdateList').innerHTML = updates.map((f,i) =>
+      '<div class="field-update-row">' +
+        '<label><input type="checkbox" id="fu_'+i+'" checked> <strong>'+f.label+'</strong></label>' +
+        '<span class="field-old">'+(v&&v[f.key]?v[f.key]:'empty')+'</span>' +
+        '<span style="color:var(--stone);">→</span>' +
+        '<span class="field-new">'+f.extracted+'</span>' +
+      '</div>'
+    ).join('');
+    document.getElementById('fieldUpdateList').dataset.updates = JSON.stringify(updates);
+    document.getElementById('fieldUpdateModal').classList.add('active');
+  }
+
+  async function applyFieldUpdates() {
+    const vehicleId = document.getElementById('fuVehicleId').value;
+    const updates = JSON.parse(document.getElementById('fieldUpdateList').dataset.updates||'[]');
+    const patch = {};
+    updates.forEach((f,i) => { const cb=document.getElementById('fu_'+i); if(cb&&cb.checked) patch[f.key]=f.extracted; });
+    if (!Object.keys(patch).length) { closeModal('fieldUpdateModal'); reopenVehicleDetail(); return; }
+    try {
+      await sbUpdate('FleetVehicles', vehicleId, patch);
+      const idx = vehicles.findIndex(v=>v.id===vehicleId);
+      if (idx>=0) vehicles[idx] = {...vehicles[idx], ...patch};
+      renderVehicles();
+      closeModal('fieldUpdateModal'); showToast('Vehicle record updated!'); reopenVehicleDetail();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+  }
+
+  // ── DOCUMENTS TAB ──────────────────────────────────────────────
+  function onDocVehicleChange() {
+    const id = document.getElementById('docVehicleSelect').value;
+    document.getElementById('docActions').style.display = id ? 'block' : 'none';
+    document.getElementById('docList').innerHTML = '';
+    if (!id) return;
+    sbGet('FleetDocuments','vehicle_id=eq.'+id+'&order=uploaded_date.desc')
+      .then(data => renderDocs(Array.isArray(data)?data:[], 'docList'))
+      .catch(()=>{});
+  }
+
+  const DOC_TYPE_LABELS = {manual:'Manual',parts_diagram:'Parts',spec_sheet:'Spec Sheet',
+    vehicle_info:'Vehicle Info',maintenance_receipt:'Receipt',url_link:'Online Manual',other:'Document'};
+
+  function renderDocs(docs, containerId) {
+    const list = document.getElementById(containerId); if (!list) return;
+    if (!docs.length) { list.innerHTML='<div class="empty-state" style="padding:1.5rem 0;"><p>No documents yet.</p></div>'; return; }
+    list.innerHTML = docs.map(d => {
+      const isUrl = d.document_type==='url_link';
+      const isReceipt = d.document_type==='maintenance_receipt';
+      const hasFile = d.file_url && d.file_url.length>0;
+      const label = DOC_TYPE_LABELS[d.document_type]||'Document';
+      const notes = (d.extracted_data&&(d.extracted_data.summary||d.extracted_data.notes))||'';
+      const badgeColor = isReceipt?'var(--success)':isUrl?'var(--accent)':'var(--wave)';
+      const icon = isUrl?'🔗 ':hasFile?'📄 ':'📋 ';
+      const safeId = d.id.replace(/'/g,"\\'");
+      return '<div class="doc-item">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">' +
+          '<div>' +
+            '<span class="type-badge" style="background:'+badgeColor+';margin-bottom:0.3rem;">'+icon+label+'</span>' +
+            '<div style="font-weight:600;color:var(--dark);font-size:0.93rem;">'+d.file_name+'</div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0;">' +
+            '<span style="font-size:0.78rem;color:var(--stone);">'+formatDate(d.uploaded_date)+'</span>' +
+            '<button class="btn btn-ghost btn-sm" onclick="openEditDocModal(\''+safeId+'\')">✏️</button>' +
+            '<button class="btn btn-danger btn-sm" onclick="deleteDocById(\''+safeId+'\')">🗑</button>' +
+          '</div>' +
+        '</div>' +
+        (hasFile?'<a href="'+d.file_url+'" target="_blank" rel="noopener" style="font-size:0.85rem;color:var(--water);font-weight:600;display:inline-block;margin-top:0.4rem;">'+(isUrl?'Open Manual →':'View Document →')+'</a>':'') +
+        (notes?'<div style="font-size:0.82rem;color:var(--stone);margin-top:0.35rem;line-height:1.5;">'+notes+'</div>':'') +
+      '</div>';
+    }).join('');
+  }
+
+  function openEditDocModal(docId) {
+    sbGet('FleetDocuments','id=eq.'+docId).then(data => {
+      if (!Array.isArray(data)||!data.length) return;
+      const d = data[0];
+      document.getElementById('edDocId').value = d.id;
+      document.getElementById('edName').value = d.file_name||'';
+      document.getElementById('edType').value = d.document_type||'manual';
+      document.getElementById('edNotes').value = (d.extracted_data&&(d.extracted_data.notes||d.extracted_data.summary))||'';
+      document.getElementById('editDocModal').classList.add('active');
+    });
+  }
+
+  async function saveDocEdit() {
+    const id = document.getElementById('edDocId').value;
+    const name = document.getElementById('edName').value.trim();
+    const type = document.getElementById('edType').value;
+    const notes = document.getElementById('edNotes').value.trim();
+    if (!name) { showToast('Name required.','error'); return; }
+    try {
+      await sbUpdate('FleetDocuments', id, {file_name:name, document_type:type, extracted_data:{notes:notes||null,summary:notes||null}});
+      closeModal('editDocModal'); showToast('Document updated!');
+      if (currentDetailVehicleId) loadDetailDocuments(currentDetailVehicleId); else onDocVehicleChange();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+  }
+
+  function deleteDocById(id) {
+    if (!confirm('Remove this document?')) return;
+    sbDelete('FleetDocuments', id)
+      .then(() => { showToast('Removed.'); if(currentDetailVehicleId)loadDetailDocuments(currentDetailVehicleId);else onDocVehicleChange(); })
+      .catch(err => showToast('Error: '+err.message,'error'));
+  }
+
+  function openUrlModal() {
+    ['urlName','urlLink','urlNotes'].forEach(id=>{document.getElementById(id).value='';});
+    document.getElementById('urlType').value='manual';
+    document.getElementById('urlModal').classList.add('active');
+  }
+
+  function openUrlModalFromDetail() {
+    document.getElementById('docVehicleSelect').value = currentDetailVehicleId;
+    openUrlModal();
+  }
+
+  async function saveUrlDoc() {
+    const vehicleId = document.getElementById('docVehicleSelect').value || currentDetailVehicleId;
+    const name = document.getElementById('urlName').value.trim();
+    const url = document.getElementById('urlLink').value.trim();
+    if (!name||!url) { showToast('Name and URL required.','error'); return; }
+    if (!url.startsWith('http')) { showToast('Please enter a valid URL.','error'); return; }
+    try {
+      await sbInsert('FleetDocuments', {
+        id:genId(), vehicle_id:vehicleId, file_name:name,
+        file_url:url, document_type:'url_link', file_size_bytes:null,
+        extracted_data:{notes:document.getElementById('urlNotes').value.trim()||null}
+      });
+      closeModal('urlModal'); showToast('Manual link saved!');
+      if (currentDetailVehicleId) loadDetailDocuments(currentDetailVehicleId); else onDocVehicleChange();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
   }
 
   // ── VEHICLE DETAIL MODAL ───────────────────────────────────────
-  let currentDetailVehicleId = null;
-
   function openVehicleDetail(vehicleId) {
     currentDetailVehicleId = vehicleId;
-    const v = vehicles.find(v => v.id===vehicleId);
-    if (!v) return;
+    const v = vehicles.find(v=>v.id===vehicleId); if (!v) return;
 
-    document.getElementById('detailTitle').textContent = v.name || 'Vehicle';
-    document.getElementById('detailSubtitle').textContent =
-      [typeLabel(v.type), v.year ? String(v.year) : '', v.make, v.model].filter(Boolean).join(' · ');
+    document.getElementById('detailTitle').textContent = displayName(v);
+    const sub = [];
+    if (v.nickname && v.name) sub.push(v.name);
+    sub.push(typeLabel(v.type));
+    if (v.year) sub.push(String(v.year));
+    document.getElementById('detailSubtitle').textContent = sub.join(' · ');
 
-    document.getElementById('detailEditBtn').setAttribute('onclick', 'closeModal("vehicleDetailModal");openEditModal("' + vehicleId + '")');
-    document.getElementById('detailAddMaintBtn').setAttribute('onclick',
-      'closeModal("vehicleDetailModal");openMaintenanceModalForVehicle("' + vehicleId + '")');
-    document.getElementById('detailUploadBtn').setAttribute('onclick', 'document.getElementById("detailFileInput").click()');
+    document.getElementById('detailEditBtn').onclick = ()=>{closeModal('vehicleDetailModal');openEditModal(vehicleId);};
+    document.getElementById('detailAddMaintBtn').onclick = ()=>{closeModal('vehicleDetailModal');openMaintenanceModalForVehicle(vehicleId);};
+    document.getElementById('detailUploadBtn').onclick = ()=>document.getElementById('detailFileInput').click();
 
-    // Switch to overview tab
-    switchDetailTab('overview', document.querySelector('.vehicle-detail-tab'));
+    switchDetailTab('overview', null);
 
-    // Build overview
-    const fields = [
-      ['Make', v.make], ['Model', v.model], ['Year', v.year],
-      ['Engine', v.engine_type], ['Hull / VIN', v.hull_vin], ['Type', typeLabel(v.type)]
-    ].filter(([,val]) => val);
-    document.getElementById('detailInfoGrid').innerHTML = fields.map(([lbl,val]) =>
-      '<div class="info-item"><div class="lbl">' + lbl + '</div><div class="val">' + val + '</div></div>'
-    ).join('');
+    const fields = [['Make',v.make],['Model',v.model],['Year',v.year],['Engine',v.engine_type],['Hull / VIN',v.hull_vin]].filter(([,val])=>val);
+    document.getElementById('detailInfoGrid').innerHTML = fields.length
+      ? fields.map(([lbl,val])=>'<div class="info-item"><div class="lbl">'+lbl+'</div><div class="val">'+val+'</div></div>').join('')
+      : '<p style="color:var(--stone);font-size:0.9rem;grid-column:1/-1;">No specs recorded yet. Edit this vehicle to add details.</p>';
+
     document.getElementById('detailNotes').innerHTML = v.notes
-      ? '<div style="background:var(--foam);border-radius:8px;padding:0.75rem 1rem;font-size:0.9rem;color:var(--dark);margin-top:0.25rem;"><strong style="color:var(--stone);font-size:0.75rem;text-transform:uppercase;">Notes</strong><p style="margin-top:0.3rem;">' + v.notes + '</p></div>'
+      ? '<div style="background:var(--foam);border-radius:8px;padding:0.75rem 1rem;font-size:0.9rem;margin-top:0.5rem;"><div style="font-size:0.72rem;font-weight:700;color:var(--stone);text-transform:uppercase;margin-bottom:0.25rem;">Notes</div>'+v.notes+'</div>'
       : '';
 
-    // Connected items
-    const connected = connections.filter(c=>c.vehicle_id===vehicleId)
-      .map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
+    const connected = connections.filter(c=>c.vehicle_id===vehicleId).map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
     document.getElementById('detailConnections').innerHTML = connected.length
-      ? '<div style="margin-top:0.75rem;"><strong style="color:var(--stone);font-size:0.8rem;text-transform:uppercase;">Connected Equipment</strong>' +
-        connected.map(a=>'<div style="font-size:0.9rem;padding:0.4rem 0;border-bottom:1px solid var(--sand);">🔩 ' + a.name + ' (' + typeLabel(a.type) + ')</div>').join('') + '</div>'
+      ? '<div style="margin-top:0.75rem;"><div style="font-size:0.72rem;font-weight:700;color:var(--stone);text-transform:uppercase;margin-bottom:0.4rem;">Connected Equipment</div>' +
+        connected.map(a =>
+          '<div onclick="closeModal(\'vehicleDetailModal\');setTimeout(()=>openVehicleDetail(\''+a.id+'\'),100)" style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:white;border-radius:8px;margin-bottom:0.4rem;border:1px solid var(--sand);cursor:pointer;">' +
+            '<span>🔩 <strong>'+displayName(a)+'</strong> <span style="color:var(--stone);font-size:0.82rem;">('+typeLabel(a.type)+')</span></span>' +
+            '<span style="font-size:0.8rem;color:var(--wave);">View →</span>' +
+          '</div>'
+        ).join('')+'</div>'
       : '';
 
     document.getElementById('vehicleDetailModal').classList.add('active');
@@ -1287,236 +1384,102 @@
   }
 
   function switchDetailTab(tab, btn) {
-    document.querySelectorAll('.detail-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.vehicle-detail-tab').forEach(b => b.classList.remove('active'));
-    document.getElementById('detail-' + tab).classList.add('active');
+    document.querySelectorAll('.detail-section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.vehicle-detail-tab').forEach(b=>b.classList.remove('active'));
+    const el=document.getElementById('detail-'+tab); if(el) el.classList.add('active');
     if (btn) btn.classList.add('active');
-    else document.querySelectorAll('.vehicle-detail-tab')[['overview','maintenance','documents'].indexOf(tab)]?.classList.add('active');
+    else { const tabs=['overview','maintenance','documents']; const btns=document.querySelectorAll('.vehicle-detail-tab'); if(btns[tabs.indexOf(tab)]) btns[tabs.indexOf(tab)].classList.add('active'); }
   }
 
   function loadDetailMaintenance(vehicleId) {
-    const list = document.getElementById('detailMaintenanceList');
-    const items = maintenanceLog.filter(e => e.vehicle_id===vehicleId);
-    if (!items.length) {
-      list.innerHTML = '<div class="empty-state" style="padding:1.5rem 0;"><p>No maintenance entries yet.</p></div>';
-      return;
-    }
+    const list=document.getElementById('detailMaintenanceList'); if(!list) return;
+    const items = [...maintenanceLog].filter(e=>e.vehicle_id===vehicleId)
+      .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+    if (!items.length) { list.innerHTML='<div class="empty-state" style="padding:1.5rem 0;"><p>No maintenance entries yet.</p></div>'; return; }
     list.innerHTML = items.map(e =>
       '<div class="maint-item">' +
-        '<div class="header"><div>' +
-          '<span class="type-badge" style="background:var(--wave);">' + maintTypeLabel(e.maintenance_type) + '</span>' +
-        '</div><div style="text-align:right;">' +
-          '<div style="font-size:0.85rem;color:var(--stone);">' + (e.date ? formatDate(e.date) : (e.season_year||'')) + '</div>' +
-          (e.cost ? '<div style="font-weight:700;color:var(--accent);">' + fmtCost(e.cost) + '</div>' : '') +
-        '</div></div>' +
-        '<div style="font-size:0.9rem;margin:0.25rem 0;">' + (e.description||'') + '</div>' +
-        (e.completed_by ? '<div style="font-size:0.82rem;color:var(--stone);">By: ' + e.completed_by + '</div>' : '') +
+        '<div class="maint-item-top">' +
+          '<span class="type-badge" style="background:var(--wave);margin:0;">'+maintTypeLabel(e.maintenance_type)+'</span>' +
+          '<div><div class="maint-item-date">'+(e.date?formatDate(e.date):(e.season_year||'No date'))+'</div>' +
+          (e.cost?'<div class="maint-item-cost">'+fmtCost(e.cost)+'</div>':'')+'</div>' +
+        '</div>' +
+        '<div class="maint-item-desc">'+(e.description||'')+'</div>' +
+        (e.completed_by?'<div class="maint-item-meta">By: '+e.completed_by+'</div>':'') +
       '</div>'
     ).join('');
   }
 
   function loadDetailDocuments(vehicleId) {
-    sbGet('FleetDocuments', 'vehicle_id=eq.' + vehicleId + '&order=uploaded_date.desc')
-      .then(data => {
-        const docs = Array.isArray(data) ? data : [];
-        const list = document.getElementById('detailDocList');
-        if (!docs.length) {
-          list.innerHTML = '<div class="empty-state" style="padding:1.5rem 0;"><p>No documents yet. Upload files or link a manual above.</p></div>';
-          return;
-        }
-        const tl = {manual:'Manual',parts_diagram:'Parts',spec_sheet:'Spec Sheet',vehicle_info:'Vehicle Info',
-          maintenance_receipt:'Receipt',url_link:'Online Manual',other:'Document'};
-        list.innerHTML = docs.map(d => {
-          const isUrl = d.document_type === 'url_link';
-          const label = tl[d.document_type] || 'Document';
-          const notes = (d.extracted_data && (d.extracted_data.summary || d.extracted_data.notes)) || '';
-          return '<div class="doc-item">' +
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">' +
-              '<div>' +
-                '<span class="type-badge" style="background:' + (isUrl?'var(--accent)':'var(--wave)') + ';">' + (isUrl?'🔗 ':'📄 ') + label + '</span>' +
-                '<h4 style="margin-top:0.3rem;">' + d.file_name + '</h4>' +
-              '</div>' +
-              '<div style="display:flex;align-items:center;gap:0.5rem;">' +
-                '<span style="font-size:0.8rem;color:var(--stone);">' + formatDate(d.uploaded_date) + '</span>' +
-                '<button class="btn btn-danger btn-sm" onclick="deleteDocFromDetail(\'' + d.id + '\')">🗑</button>' +
-              '</div>' +
-            '</div>' +
-            (d.file_url ? '<a href="' + d.file_url + '" target="_blank" rel="noopener" style="font-size:0.85rem;color:var(--water);font-weight:600;">' + (isUrl?'Open Manual →':'View File →') + '</a>' : '') +
-            (notes ? '<div style="font-size:0.82rem;color:var(--stone);margin-top:0.35rem;">' + notes + '</div>' : '') +
-          '</div>';
-        }).join('');
-      }).catch(()=>{});
-  }
-
-  function deleteDocFromDetail(id) {
-    if (!confirm('Remove this document?')) return;
-    sbDelete('FleetDocuments', id)
-      .then(() => { showToast('Removed.'); loadDetailDocuments(currentDetailVehicleId); })
-      .catch(err => showToast('Error: ' + err.message, 'error'));
-  }
-
-  function openMaintenanceModalForVehicle(vehicleId) {
-    openMaintenanceModal();
-    setTimeout(() => { document.getElementById('mVehicle').value = vehicleId; }, 100);
-  }
-
-  function openUrlModalFromDetail() {
-    // Pre-select this vehicle in the documents tab select too
-    openUrlModal();
-    // Store the vehicle id so saveUrlDoc can use currentDetailVehicleId if docVehicleSelect is empty
-    document.getElementById('docVehicleSelect').value = currentDetailVehicleId;
-  }
-
-  function deleteDoc(id) {
-    if (!confirm('Remove this document?')) return;
-    sbDelete('FleetDocuments', id)
-      .then(() => { showToast('Removed.'); onDocVehicleChange(); })
-      .catch(err => showToast('Error: ' + err.message, 'error'));
-  }
-
-  function openUrlModal() {
-    ['urlName','urlLink','urlNotes'].forEach(id => { document.getElementById(id).value=''; });
-    document.getElementById('urlType').value = 'manual';
-    document.getElementById('urlModal').classList.add('active');
-  }
-
-  async function saveUrlDoc() {
-    const vehicleId = document.getElementById('docVehicleSelect').value;
-    const name = document.getElementById('urlName').value.trim();
-    const url = document.getElementById('urlLink').value.trim();
-    if (!name || !url) { showToast('Name and URL are required.', 'error'); return; }
-    if (!url.startsWith('http')) { showToast('Please enter a valid URL.', 'error'); return; }
-    try {
-      await sbInsert('FleetDocuments', {
-        id: genId(), vehicle_id: vehicleId, file_name: name,
-        file_url: url, document_type: 'url_link', file_size_bytes: null,
-        extracted_data: {notes: document.getElementById('urlNotes').value.trim()||null}
-      });
-      closeModal('urlModal'); showToast('Manual link saved!'); onDocVehicleChange();
-    } catch(err) { showToast('Error: ' + err.message, 'error'); }
+    sbGet('FleetDocuments','vehicle_id=eq.'+vehicleId+'&order=uploaded_date.desc')
+      .then(data=>renderDocs(Array.isArray(data)?data:[],'detailDocList'))
+      .catch(()=>{});
   }
 
   // ── CHECKLISTS ─────────────────────────────────────────────────
-  const SEASONS = [
-    {key:'spring',label:'🌱 Spring'},
-    {key:'summer',label:'☀️ Summer'},
-    {key:'fall',label:'🍂 Fall Winterization'},
-    {key:'winter',label:'❄️ Winter Storage'}
-  ];
+  const SEASONS = [{key:'spring',label:'🌱 Spring'},{key:'summer',label:'☀️ Summer'},{key:'fall',label:'🍂 Fall Winterization'},{key:'winter',label:'❄️ Winter Storage'}];
 
   function onChecklistVehicleChange() {
     currentChecklistVehicleId = document.getElementById('checklistVehicle').value;
     if (!currentChecklistVehicleId) { document.getElementById('checklistContent').innerHTML=''; return; }
     renderChecklistShell();
-    sbGet('FleetChecklists','vehicle_id=eq.' + currentChecklistVehicleId)
-      .then(data => {
-        if (Array.isArray(data)) {
-          data.forEach(cl => {
-            if (!checklists[currentChecklistVehicleId]) checklists[currentChecklistVehicleId]={};
-            checklists[currentChecklistVehicleId][cl.season] = cl;
-          });
-          renderChecklistSeason();
-        }
-      }).catch(()=>{});
+    sbGet('FleetChecklists','vehicle_id=eq.'+currentChecklistVehicleId).then(data => {
+      if (Array.isArray(data)) {
+        data.forEach(cl => { if(!checklists[currentChecklistVehicleId])checklists[currentChecklistVehicleId]={}; checklists[currentChecklistVehicleId][cl.season]=cl; });
+        renderChecklistSeason();
+      }
+    }).catch(()=>{});
   }
 
   function renderChecklistShell() {
     document.getElementById('checklistContent').innerHTML =
-      '<div class="season-tabs">' +
-      SEASONS.map(s => '<button class="season-tab' + (s.key===currentChecklistSeason?' active':'') + '" onclick="switchSeason(\'' + s.key + '\')">' + s.label + '</button>').join('') +
-      '</div><div id="seasonContent"></div>';
+      '<div class="season-tabs">' + SEASONS.map(s=>'<button class="season-tab'+(s.key===currentChecklistSeason?' active':'')+'" onclick="switchSeason(\''+s.key+'\')">'+s.label+'</button>').join('') + '</div><div id="seasonContent"></div>';
   }
 
   function switchSeason(s) {
-    currentChecklistSeason = s;
-    document.querySelectorAll('.season-tab').forEach((b,i) => b.classList.toggle('active', SEASONS[i].key===s));
+    currentChecklistSeason=s;
+    document.querySelectorAll('.season-tab').forEach((b,i)=>b.classList.toggle('active',SEASONS[i].key===s));
     renderChecklistSeason();
   }
 
   function renderChecklistSeason() {
-    const el = document.getElementById('seasonContent');
-    if (!el) return;
-    const cl = checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
-    const v = vehicles.find(v => v.id===currentChecklistVehicleId);
-    if (!cl) {
-      el.innerHTML = '<div class="empty-state" style="padding:1.5rem 0;"><p style="margin-bottom:1rem;">No checklist yet.</p>' +
-        '<button class="btn btn-primary" onclick="generateChecklist()">🤖 Generate AI Checklist</button></div>';
-      return;
-    }
-    const items = cl.checklist_items||[];
-    const done = items.filter(i=>i.completed).length;
-    const pct = items.length ? Math.round(done/items.length*100) : 0;
-    el.innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">' +
-        '<div style="font-size:0.85rem;color:var(--stone);">' + done + '/' + items.length + ' complete' +
-          '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-        '</div>' +
-        '<div style="display:flex;gap:0.5rem;">' +
-          '<button class="btn btn-secondary btn-sm" onclick="generateChecklist()">🔄 Regenerate</button>' +
-          '<button class="btn btn-primary btn-sm" onclick="saveChecklist()">💾 Save</button>' +
-        '</div>' +
+    const el=document.getElementById('seasonContent'); if(!el) return;
+    const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
+    if (!cl) { el.innerHTML='<div class="empty-state" style="padding:1.5rem 0;"><p style="margin-bottom:1rem;">No checklist yet.</p><button class="btn btn-primary" onclick="generateChecklist()">🤖 Generate AI Checklist</button></div>'; return; }
+    const items=cl.checklist_items||[], done=items.filter(i=>i.completed).length, pct=items.length?Math.round(done/items.length*100):0;
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">' +
+      '<div style="font-size:0.85rem;color:var(--stone);">'+done+'/'+items.length+' complete<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div></div>' +
+      '<div style="display:flex;gap:0.5rem;"><button class="btn btn-ghost btn-sm" onclick="generateChecklist()">🔄 Regenerate</button><button class="btn btn-primary btn-sm" onclick="saveChecklist()">💾 Save</button></div>' +
       '</div>' +
-      items.map((item,i) =>
-        '<div class="checklist-item' + (item.completed?' done':'') + '" id="ci' + i + '">' +
-          '<input type="checkbox"' + (item.completed?' checked':'') + ' onchange="toggleCI(' + i + ')">' +
-          '<div class="text">' + item.item_text +
-            (item.completed ? '<input type="text" style="width:100%;margin-top:0.4rem;padding:0.3rem 0.5rem;font-size:0.82rem;border:1px solid var(--sand);border-radius:5px;" placeholder="Note..." value="' + (item.notes||'') + '" oninput="updateCINote(' + i + ',this.value)">' : '') +
-          '</div>' +
-        '</div>'
+      items.map((item,i)=>
+        '<div class="checklist-item'+(item.completed?' done':'')+'"><input type="checkbox"'+(item.completed?' checked':'')+' onchange="toggleCI('+i+')">' +
+        '<div class="text">'+item.item_text+(item.completed?'<input type="text" style="width:100%;margin-top:0.4rem;padding:0.3rem 0.5rem;font-size:0.82rem;border:1px solid var(--sand);border-radius:5px;" placeholder="Note..." value="'+(item.notes||'')+'" oninput="updateCINote('+i+',this.value)">':'')+'</div></div>'
       ).join('');
   }
 
   async function generateChecklist() {
-    const v = vehicles.find(v => v.id===currentChecklistVehicleId);
-    if (!v) return;
-    document.getElementById('seasonContent').innerHTML =
-      '<div class="ai-processing"><p><span class="spinner"></span>Generating ' + currentChecklistSeason + ' checklist for ' + v.name + '...</p></div>';
-
-    const history = maintenanceLog.filter(e=>e.vehicle_id===currentChecklistVehicleId)
-      .slice(0,5).map(e=>e.maintenance_type+': '+e.description).join('; ')||'None';
-
-    const prompt = 'Generate a ' + currentChecklistSeason + ' checklist for: ' + v.name +
-      ' (' + v.type + ', ' + [v.make,v.model,v.year].filter(Boolean).join(' ') + ', engine: ' + (v.engine_type||'unknown') + '). ' +
-      'Recent maintenance: ' + history + '. Return ONLY JSON: {"items":[{"item_text":"...","completed":false,"notes":"","order":1},...]} with 12-18 items.';
-
+    const v = vehicles.find(v=>v.id===currentChecklistVehicleId); if(!v) return;
+    document.getElementById('seasonContent').innerHTML='<div class="ai-processing"><p><span class="spinner"></span>Generating '+currentChecklistSeason+' checklist for '+displayName(v)+'...</p></div>';
+    const history = maintenanceLog.filter(e=>e.vehicle_id===currentChecklistVehicleId).slice(0,5).map(e=>e.maintenance_type+': '+e.description).join('; ')||'None';
+    const prompt = 'Generate a '+currentChecklistSeason+' checklist for: '+v.name+' ('+v.type+', '+[v.make,v.model,v.year].filter(Boolean).join(' ')+', engine: '+(v.engine_type||'unknown')+'). Recent maintenance: '+history+'. Return ONLY JSON: {"items":[{"item_text":"...","completed":false,"notes":"","order":1},...]} with 12-18 items.';
     try {
-      const r = await fetch(WORKER_URL, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({appId:APP_ID, method:'CLAUDE_API', claudeMethod:'generateChecklist', prompt})
-      });
+      const r = await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appId:APP_ID,method:'CLAUDE_API',claudeMethod:'generateChecklist',prompt})});
       const data = await r.json();
-      const items = (data.result?.items||[]).map((item,i)=>({...item,id:i.toString(),completed:false,notes:'',order:i+1}));
-      const existing = checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
-      const row = {id:existing?.id||genId(), vehicle_id:currentChecklistVehicleId, season:currentChecklistSeason, checklist_items:items};
-      await sbUpsert('FleetChecklists', row, 'id');
-      if (!checklists[currentChecklistVehicleId]) checklists[currentChecklistVehicleId]={};
-      checklists[currentChecklistVehicleId][currentChecklistSeason] = row;
-      renderChecklistSeason();
-      showToast('Checklist generated!');
-    } catch(err) {
-      document.getElementById('seasonContent').innerHTML = '<div class="empty-state"><p>Failed: ' + err.message + '</p><button class="btn btn-primary" onclick="generateChecklist()">Try Again</button></div>';
-    }
+      const items=(data.result?.items||[]).map((item,i)=>({...item,id:i.toString(),completed:false,notes:'',order:i+1}));
+      const existing=checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
+      const row={id:existing?.id||genId(),vehicle_id:currentChecklistVehicleId,season:currentChecklistSeason,checklist_items:items};
+      await sbUpsert('FleetChecklists',row,'id');
+      if(!checklists[currentChecklistVehicleId]) checklists[currentChecklistVehicleId]={};
+      checklists[currentChecklistVehicleId][currentChecklistSeason]=row;
+      renderChecklistSeason(); showToast('Checklist generated!');
+    } catch(err) { document.getElementById('seasonContent').innerHTML='<div class="empty-state"><p>Failed: '+err.message+'</p><button class="btn btn-primary" onclick="generateChecklist()">Try Again</button></div>'; }
   }
 
-  function toggleCI(i) {
-    const cl = checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
-    if (!cl) return;
-    cl.checklist_items[i].completed = !cl.checklist_items[i].completed;
-    renderChecklistSeason();
-  }
-
-  function updateCINote(i, val) {
-    const cl = checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
-    if (cl) cl.checklist_items[i].notes = val;
-  }
-
+  function toggleCI(i) { const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(cl){cl.checklist_items[i].completed=!cl.checklist_items[i].completed;renderChecklistSeason();} }
+  function updateCINote(i,val) { const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(cl) cl.checklist_items[i].notes=val; }
   async function saveChecklist() {
-    const cl = checklists[currentChecklistVehicleId]?.[currentChecklistSeason];
-    if (!cl) return;
-    try {
-      await sbUpdate('FleetChecklists', cl.id, {checklist_items: cl.checklist_items});
-      showToast('Progress saved!');
-    } catch(err) { showToast('Save failed.', 'error'); }
+    const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(!cl) return;
+    try { await sbUpdate('FleetChecklists',cl.id,{checklist_items:cl.checklist_items}); showToast('Progress saved!'); }
+    catch(err) { showToast('Save failed.','error'); }
   }
 
   // ── AI ADVISOR ─────────────────────────────────────────────────
@@ -1524,90 +1487,51 @@
     currentAdvisorVehicleId = document.getElementById('advisorVehicle').value;
     const section = document.getElementById('advisorSection');
     if (!currentAdvisorVehicleId) { section.style.display='none'; return; }
-
-    const v = vehicles.find(v => v.id===currentAdvisorVehicleId);
-    section.style.display = 'block';
-    advisorHistory = [];
-
-    // Build connected items list
-    const connectedItems = connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId)
-      .map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
-
-    const badge = document.getElementById('advisorBadge');
-    badge.innerHTML = '<strong>' + (isAccessory(v?.type)?'🔩':'🚤') + ' ' + (v?.name||'Vehicle') + '</strong>' +
-      ([v?.year,v?.make,v?.model].filter(Boolean).join(' ') ? ' · ' + [v?.year,v?.make,v?.model].filter(Boolean).join(' ') : '') +
-      (v?.engine_type ? ' · ' + v.engine_type : '') +
-      (connectedItems.length ? '<span style="display:block;font-size:0.82rem;opacity:0.85;margin-top:0.2rem;">Connected: ' + connectedItems.map(a=>a.name).join(', ') + '</span>' : '');
-
-    const chat = document.getElementById('chatBox');
-    chat.innerHTML = '';
-    const welcome = document.createElement('div');
-    welcome.className = 'msg-ai';
-    welcome.textContent = 'Ready to help with your ' + (v?.name||'vehicle') + '.' +
-      (connectedItems.length ? ' I also know about its connected equipment: ' + connectedItems.map(a=>a.name).join(', ') + '.' : '') +
-      ' Ask me about maintenance, troubleshooting, or anything else.';
+    const v = vehicles.find(v=>v.id===currentAdvisorVehicleId);
+    section.style.display='block'; advisorHistory=[];
+    const connectedItems = connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId).map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
+    document.getElementById('advisorBadge').innerHTML = '<strong>'+displayName(v)+'</strong>' +
+      ([v?.year,v?.make,v?.model].filter(Boolean).join(' ')?(' · '+[v?.year,v?.make,v?.model].filter(Boolean).join(' ')):'') +
+      (v?.engine_type?' · '+v.engine_type:'') +
+      (connectedItems.length?'<span style="display:block;font-size:0.82rem;opacity:0.85;margin-top:0.2rem;">Connected: '+connectedItems.map(a=>displayName(a)).join(', ')+'</span>':'');
+    const chat=document.getElementById('chatBox'); chat.innerHTML='';
+    const welcome=document.createElement('div'); welcome.className='msg-ai';
+    welcome.textContent='Ready to help with your '+displayName(v)+'.'+(connectedItems.length?' I also know about: '+connectedItems.map(a=>displayName(a)).join(', ')+'.':'')+' Ask me anything.';
     chat.appendChild(welcome);
   }
 
   async function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    if (!message) return;
-    const btn = document.getElementById('sendBtn');
-    input.value = ''; btn.disabled = true;
-
-    const chat = document.getElementById('chatBox');
-    const uDiv = document.createElement('div'); uDiv.className='msg-user'; uDiv.textContent=message;
-    chat.appendChild(uDiv);
-    const tDiv = document.createElement('div'); tDiv.className='msg-ai'; tDiv.textContent='...';
-    chat.appendChild(tDiv);
-    chat.scrollTop = chat.scrollHeight;
-
+    const input=document.getElementById('chatInput'), message=input.value.trim(); if(!message) return;
+    const btn=document.getElementById('sendBtn'); input.value=''; btn.disabled=true;
+    const chat=document.getElementById('chatBox');
+    const uDiv=document.createElement('div'); uDiv.className='msg-user'; uDiv.textContent=message; chat.appendChild(uDiv);
+    const tDiv=document.createElement('div'); tDiv.className='msg-ai'; tDiv.textContent='...'; chat.appendChild(tDiv);
+    chat.scrollTop=chat.scrollHeight;
     try {
-      const v = vehicles.find(v => v.id===currentAdvisorVehicleId);
-      const hist = maintenanceLog.filter(e=>e.vehicle_id===currentAdvisorVehicleId)
-        .slice(0,10).map(e=>'- ' + (e.date||e.season_year||'?') + ': ' + maintTypeLabel(e.maintenance_type) + ' — ' + e.description).join('\n') || 'None';
-
-      const connectedItems = connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId)
-        .map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
-      const accCtx = connectedItems.length
-        ? '\n\nConnected equipment:\n' + connectedItems.map(a => '- ' + a.name + ' (' + typeLabel(a.type) + ')' + (a.make?' '+a.make:'') + (a.model?' '+a.model:'') + (a.year?' '+a.year:'')).join('\n')
-        : '';
-
-      const system = 'You are an expert marine and recreational vehicle mechanic. You know this vehicle:\n' +
-        'Name: ' + (v?.name||'Unknown') + '\nType: ' + typeLabel(v?.type) + '\n' +
-        'Make/Model: ' + ([v?.make,v?.model].filter(Boolean).join(' ')||'Unknown') + '\n' +
-        'Year: ' + (v?.year||'Unknown') + '\nEngine: ' + (v?.engine_type||'Unknown') + '\n' +
-        'Hull/VIN: ' + (v?.hull_vin||'Unknown') + '\nNotes: ' + (v?.notes||'None') + '\n' +
-        '\nMaintenance History:\n' + hist + accCtx +
-        '\n\nGive practical, specific advice. Reference history when relevant. Flag safety concerns clearly.';
-
-      advisorHistory.push({role:'user', content:message});
-      const response = await callClaudeChat(advisorHistory, system);
-      advisorHistory.push({role:'assistant', content:response});
-      tDiv.textContent = response;
-    } catch(err) {
-      tDiv.textContent = 'Error: ' + err.message;
-    }
-    btn.disabled = false;
-    chat.scrollTop = chat.scrollHeight;
+      const v=vehicles.find(v=>v.id===currentAdvisorVehicleId);
+      const hist=maintenanceLog.filter(e=>e.vehicle_id===currentAdvisorVehicleId).slice(0,10).map(e=>'- '+(e.date||e.season_year||'?')+': '+maintTypeLabel(e.maintenance_type)+' — '+e.description).join('\n')||'None';
+      const connectedItems=connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId).map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
+      const system='You are an expert marine and recreational vehicle mechanic.\nVehicle: '+(v?.name||'Unknown')+(v?.nickname?' (called "'+v.nickname+'")')+ '\nType: '+typeLabel(v?.type)+'\nMake/Model: '+([v?.make,v?.model].filter(Boolean).join(' ')||'Unknown')+'\nYear: '+(v?.year||'Unknown')+'\nEngine: '+(v?.engine_type||'Unknown')+'\nHull/VIN: '+(v?.hull_vin||'Unknown')+'\nNotes: '+(v?.notes||'None')+'\n\nMaintenance History:\n'+hist+(connectedItems.length?'\n\nConnected equipment:\n'+connectedItems.map(a=>'- '+displayName(a)+' ('+typeLabel(a.type)+')').join('\n'):'')+'\n\nGive practical, specific advice. Reference history when relevant. Flag safety concerns clearly.';
+      advisorHistory.push({role:'user',content:message});
+      const response=await callClaudeChat(advisorHistory,system);
+      advisorHistory.push({role:'assistant',content:response});
+      tDiv.textContent=response;
+    } catch(err) { tDiv.textContent='Error: '+err.message; }
+    btn.disabled=false; chat.scrollTop=chat.scrollHeight;
   }
 
   // ── SHARE ──────────────────────────────────────────────────────
   function generateShareLink() {
-    const token = genId() + genId();
-    const url = window.location.origin + window.location.pathname + '?token=' + token;
-    document.getElementById('shareUrl').textContent = url;
-    document.getElementById('shareDisplay').style.display = 'block';
+    const token=genId()+genId();
+    const url=window.location.origin+window.location.pathname+'?token='+token;
+    document.getElementById('shareUrl').textContent=url;
+    document.getElementById('shareDisplay').style.display='block';
   }
-
   function copyShareLink() {
-    navigator.clipboard.writeText(document.getElementById('shareUrl').textContent)
-      .then(()=>showToast('Link copied!'));
+    navigator.clipboard.writeText(document.getElementById('shareUrl').textContent).then(()=>showToast('Link copied!'));
   }
 
   // ── INIT ───────────────────────────────────────────────────────
-  // Set build date dynamically from file deploy time (approximated)
   document.getElementById('buildDate').textContent = 'Build: ' +
     new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 
@@ -1617,9 +1541,7 @@
     navigator.serviceWorker.register('./sw.js').then(reg => {
       reg.addEventListener('updatefound', () => {
         const nw = reg.installing;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'activated') window.location.reload();
-        });
+        nw.addEventListener('statechange', () => { if(nw.state==='activated') window.location.reload(); });
       });
     }).catch(()=>{});
   }
