@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 12:45 AM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 1:00 AM</p>
 </div>
 
 <div class="container">
@@ -938,15 +938,27 @@
   // VEHICLES
   // ============================================================
   function loadVehicles() {
-    // Load vehicles first — always succeeds
+    const grid = document.getElementById('vehicleGrid');
+    if (grid) grid.innerHTML = '<div class="empty-state"><p style="color:var(--stone)">Loading vehicles...</p></div>';
+
     sbGet('FleetVehicles', 'order=name.asc')
       .then(data => {
-        vehicles = Array.isArray(data) ? data : [];
+        if (!Array.isArray(data)) {
+          // Show exactly what came back so we can diagnose
+          const msg = data?.message || data?.error || JSON.stringify(data).substring(0, 120);
+          if (grid) grid.innerHTML = '<div class="empty-state"><p style="color:#dc3545">Load error: ' + msg + '</p></div>';
+          vehicles = [];
+          return;
+        }
+        vehicles = data;
         renderVehicles();
         renderAccessories();
         populateVehicleSelects();
       })
-      .catch(() => { vehicles = []; renderVehicles(); });
+      .catch(err => {
+        if (grid) grid.innerHTML = '<div class="empty-state"><p style="color:#dc3545">Connection error: ' + err.message + '</p></div>';
+        vehicles = [];
+      });
 
     // Load connections separately — table may not exist yet, fail silently
     sbGet('FleetConnections', '')
