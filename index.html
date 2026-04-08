@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 11:50 PM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 11:55 PM</p>
 </div>
 
 <div class="container">
@@ -1618,281 +1618,46 @@
   }
 
   // ============================================================
-  // ONEDRIVE PICKER
+  // ONEDRIVE PICKER — unified, popup mode (no openInNewWindow)
   // ============================================================
-  // Microsoft OneDrive file picker SDK
   const ONEDRIVE_CLIENT_ID = '3037a9b3-4733-45a6-af61-486b67c0c99e';
-  // We use the public picker approach which works without app registration for personal OneDrive
+
+  let _odContext = 'document'; // 'vehicle', 'document', 'card'
+  let _odVehicleId = null;
 
   function openOneDrivePicker(context) {
-    // context: 'vehicle' = add vehicle flow, 'document' = add document flow
-    const options = {
-      clientId: ONEDRIVE_CLIENT_ID,
-      action: 'query',
-      multiSelect: false,
-      advanced: {
-        filter: '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-        redirectUri: window.location.href.split('?')[0]
-      },
-      success: function(files) {
-        if (!files || !files.value || !files.value.length) return;
-        const file = files.value[0];
-        if (context === 'vehicle') {
-          handleOneDriveVehicleFile(file);
-        } else if (context === 'document') {
-          handleOneDriveDocumentFile(file);
-        }
-      },
-      cancel: function() {
-        showToast('OneDrive picker cancelled.');
-      },
-      error: function(e) {
-        showToast('OneDrive error: ' + (e.message || 'Could not open picker'), 'error');
-      }
-    };
-
-    // Load OneDrive SDK if not already loaded
-    if (typeof OneDrive === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://js.live.net/v7.2/OneDrive.js';
-      script.onload = () => OneDrive.open(options);
-      script.onerror = () => {
-        showToast('Could not load OneDrive. Check your internet connection.', 'error');
-      };
-      document.head.appendChild(script);
-    } else {
-      OneDrive.open(options);
-    }
-  }
-
-  async function handleOneDriveVehicleFile(file) {
-    // file has: name, size, webUrl, @microsoft.graph.downloadUrl
-    document.getElementById('oneDrivePickerArea').style.display = 'none';
-    document.getElementById('oneDriveVehicleProcessing').style.display = 'block';
-    document.getElementById('oneDriveVehicleResult').style.display = 'none';
-
-    try {
-      const downloadUrl = file['@microsoft.graph.downloadUrl'];
-      if (!downloadUrl) throw new Error('No download URL from OneDrive');
-
-      // Fetch the file content
-      const resp = await fetch(downloadUrl);
-      if (!resp.ok) throw new Error('Could not download file from OneDrive');
-      const blob = await resp.blob();
-      const base64Data = await blobToBase64(blob);
-      const mediaType = blob.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
-
-      // Send to Claude via Worker
-      const result = await callClaude('extractVehicleDocument', base64Data, mediaType);
-      document.getElementById('oneDriveVehicleProcessing').style.display = 'none';
-      showExtractedVehicleResult(result, 'oneDriveVehicleResult');
-
-    } catch (err) {
-      document.getElementById('oneDriveVehicleProcessing').style.display = 'none';
-      document.getElementById('oneDrivePickerArea').style.display = 'block';
-      showToast('Could not read OneDrive file: ' + err.message, 'error');
-    }
-  }
-
-  async function handleOneDriveDocumentFile(file) {
-    const vehicleId = document.getElementById('docVehicleSelect').value;
-    if (!vehicleId) { showToast('Please select a vehicle first.', 'error'); return; }
-
-    showToast('Saving OneDrive link...');
-    const doc = {
-      id: genId(),
-      vehicle_id: vehicleId,
-      file_name: file.name,
-      file_url: file.webUrl,
-      document_type: file.name.toLowerCase().endsWith('.pdf') ? 'manual' : 'vehicle_info',
-      file_size_bytes: file.size || null,
-      extracted_data: { notes: 'Linked from OneDrive' }
-    };
-
-    sbInsert('FleetDocuments', doc)
-      .then(() => { showToast('OneDrive file linked!'); loadDocumentsForVehicle(); })
-      .catch(err => showToast('Error: ' + err.message, 'error'));
-  }
-
-  function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = () => reject(new Error('Read failed'));
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  // ============================================================
-  // DOCUMENTS
-  // ============================================================
-  function loadDocumentsForVehicle() {
-    const vehicleId = document.getElementById('docVehicleSelect').value;
-    document.getElementById('uploadSection').style.display = vehicleId ? 'block' : 'none';
-    document.getElementById('documentsList').innerHTML = '';
-    if (vehicleId) {
-      sbGet('FleetDocuments', `vehicle_id=eq.${vehicleId}&order=uploaded_date.desc`)
-        .then(docs => renderDocuments(docs || []))
-        .catch(() => {});
-    }
-  }
-
-  function renderDocuments(docs) {
-    const list = document.getElementById('documentsList');
-    if (!docs.length) {
-      list.innerHTML = '<p style="color:var(--stone);padding:1rem 0;">No documents yet. Use the buttons above to upload a file or link an online manual.</p>';
-      return;
-    }
-    const typeLabels = { manual:'Manual', parts_diagram:'Parts', spec_sheet:'Spec Sheet', vehicle_info:'Vehicle Info', maintenance_receipt:'Receipt', url_link:'Online Manual', other:'Document' };
-    list.innerHTML = docs.map(d => {
-      const isUrl = d.document_type === 'url_link';
-      const tLabel = typeLabels[d.document_type] || d.document_type || 'Document';
-      const notes = d.extracted_data && d.extracted_data.notes ? d.extracted_data.notes : '';
-      return '<div class="maintenance-item" style="border-left-color:var(--water);">' +
-        '<div class="m-header"><div>' +
-        '<span class="type-badge" style="background:' + (isUrl ? 'var(--accent)' : 'var(--wave)') + ';">' +
-        (isUrl ? '🔗' : '📄') + ' ' + tLabel + '</span>' +
-        '<h4 style="margin-top:0.4rem;">' + d.file_name + '</h4></div>' +
-        '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-        '<span style="font-size:0.85rem;color:var(--stone);">' + (formatDate(d.uploaded_date) || '') + '</span>' +
-        '<button class="btn btn-danger" style="padding:0.3rem 0.7rem;font-size:0.75rem;" onclick="deleteDocument(\'' + d.id + '\')">🗑</button>' +
-        '</div></div>' +
-        (d.file_url ? '<a href="' + d.file_url + '" target="_blank" rel="noopener" style="font-size:0.9rem;color:var(--water);font-weight:600;">' + (isUrl ? 'Open Online Manual →' : 'View Document →') + '</a>' : '') +
-        (notes ? '<div style="font-size:0.85rem;color:var(--stone);margin-top:0.4rem;">' + notes + '</div>' : '') +
-        '</div>';
-    }).join('');
-  }
-
-  function handleDocumentUpload(event) {
-    showToast('File upload coming in a future build. Use Link Online Manual for now.', 'error');
-    event.target.value = '';
-  }
-
-  function openAddUrlModal() {
-    document.getElementById('urlDocName').value = '';
-    document.getElementById('urlDocUrl').value = '';
-    document.getElementById('urlDocType').value = 'manual';
-    document.getElementById('urlDocNotes').value = '';
-    document.getElementById('addUrlModal').classList.add('active');
-  }
-
-  function saveUrlDocument() {
-    const vehicleId = document.getElementById('docVehicleSelect').value;
-    const name = document.getElementById('urlDocName').value.trim();
-    const url = document.getElementById('urlDocUrl').value.trim();
-    if (!name || !url) { showToast('Name and URL are required.', 'error'); return; }
-    if (!url.startsWith('http')) { showToast('Please enter a valid URL starting with https://', 'error'); return; }
-    const doc = {
-      id: genId(), vehicle_id: vehicleId, file_name: name,
-      file_url: url, document_type: 'url_link', file_size_bytes: null,
-      extracted_data: { notes: document.getElementById('urlDocNotes').value.trim() || null }
-    };
-    sbInsert('FleetDocuments', doc)
-      .then(() => { closeModal('addUrlModal'); showToast('Manual link saved!'); loadDocumentsForVehicle(); })
-      .catch(err => showToast('Error: ' + err.message, 'error'));
-  }
-
-  function deleteDocument(id) {
-    if (!confirm('Remove this document?')) return;
-    sbDelete('FleetDocuments', id)
-      .then(() => { showToast('Document removed.'); loadDocumentsForVehicle(); })
-      .catch(err => showToast('Error: ' + err.message, 'error'));
-  }
-
-  // ============================================================
-  // VEHICLE TYPE HELPERS
-  // ============================================================
-  function toggleConnectedToField(selectId, groupId) {
-    const sel = document.getElementById(selectId);
-    const grp = document.getElementById(groupId);
-    if (!grp) return;
-    const isAccessory = isAccessoryType(sel.value);
-    grp.style.display = isAccessory ? 'block' : 'none';
-  }
-
-  function addAdditionalConnection(selectId, listId) {
-    const sel = document.getElementById(selectId);
-    const val = sel.value;
-    if (!val) return;
-    const list = document.getElementById(listId);
-    const name = sel.options[sel.selectedIndex].text;
-    // Avoid duplicates
-    if (list.querySelector(`[data-id="${val}"]`)) return;
-    const tag = document.createElement('div');
-    tag.dataset.id = val;
-    tag.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;background:var(--wave);color:white;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.8rem;margin:0.2rem;';
-    tag.innerHTML = name + ' <span style="cursor:pointer;font-weight:700;" onclick="this.parentElement.remove()">×</span>';
-    list.appendChild(tag);
-    sel.value = '';
-  }
-
-  function getAdditionalConnectionIds(listId) {
-    return Array.from(document.querySelectorAll('#' + listId + ' [data-id]')).map(el => el.dataset.id);
-  }
-
-  function toggleCustomType(selectId, inputId) {
-    const sel = document.getElementById(selectId);
-    const inp = document.getElementById(inputId);
-    inp.style.display = sel.value === 'other' ? 'block' : 'none';
-  }
-
-  function getVehicleTypeValue(selectId, inputId) {
-    const sel = document.getElementById(selectId);
-    if (sel.value === 'other') {
-      const custom = document.getElementById(inputId).value.trim();
-      return custom || 'other';
-    }
-    return sel.value;
-  }
-
-  function typeDisplayLabel(type) {
-    const map = { boat:'Boat', snowmobile:'Snowmobile', jet_ski:'Jet Ski', boat_lift:'Boat Lift', truck:'Truck', trailer:'Trailer', fish_finder:'Electronics', atv:'ATV/UTV' };
-    return map[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Vehicle');
-  }
-
-
-  // ============================================================
-  // ONEDRIVE PICKER — unified implementation
-  // ============================================================
-  // openOneDrivePicker(context, vehicleId) 
-  //   context: 'vehicle' = add vehicle flow, 'document' = docs tab, 'card' = from vehicle card
-  //   vehicleId: required for 'card' and 'document' contexts
-
-  let _odVehicleId = null; // vehicle ID for card/document context
-
-  function openVehicleOneDrivePicker(vehicleId, vehicleName) {
-    // Called from vehicle card ☁️ Docs button
-    _odVehicleId = vehicleId;
-    _openOneDriveSDK('card');
-  }
-
-  function openOneDrivePicker(context) {
+    _odContext = context;
     if (context === 'document') {
       _odVehicleId = document.getElementById('docVehicleSelect').value;
       if (!_odVehicleId) { showToast('Select a vehicle first.', 'error'); return; }
     } else if (context === 'vehicle') {
-      _odVehicleId = null; // no vehicle yet — will be created from AI extraction
+      _odVehicleId = null;
     }
-    _openOneDriveSDK(context);
+    _launchOneDrive();
   }
 
-  function _openOneDriveSDK(context) {
+  function openVehicleOneDrivePicker(vehicleId, vehicleName) {
+    _odContext = 'card';
+    _odVehicleId = vehicleId;
+    _launchOneDrive();
+  }
+
+  function _launchOneDrive() {
     const odOptions = {
       clientId: ONEDRIVE_CLIENT_ID,
       action: 'download',
-      multiSelect: context === 'card', // allow multi-select when adding docs from card
-      openInNewWindow: true,
+      multiSelect: (_odContext === 'card' || _odContext === 'document'),
+      // NO openInNewWindow — runs as popup within same window
       advanced: {
         filter: '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-        redirectUri: window.location.href.split('?')[0]
+        redirectUri: window.location.origin + window.location.pathname
       },
       success: function(files) {
         const fileList = files.value || [];
         if (!fileList.length) return;
-        if (context === 'vehicle') {
+        if (_odContext === 'vehicle') {
           handleOneDriveVehicleFile(fileList[0]);
         } else {
-          // card or document context — save all selected files as linked documents
           saveOneDriveDocuments(fileList, _odVehicleId);
         }
       },
@@ -1904,14 +1669,14 @@
       const script = document.createElement('script');
       script.src = 'https://js.live.net/v7.2/OneDrive.js';
       script.onload = () => OneDrive.open(odOptions);
-      script.onerror = () => showToast('Could not load OneDrive SDK.', 'error');
+      script.onerror = () => showToast('Could not load OneDrive SDK. Check internet connection.', 'error');
       document.head.appendChild(script);
     } else {
       OneDrive.open(odOptions);
     }
   }
 
-  async function saveOneDriveDocuments(files, vehicleId) {
+    async function saveOneDriveDocuments(files, vehicleId) {
     if (!vehicleId) { showToast('No vehicle selected.', 'error'); return; }
     let saved = 0;
     for (const file of files) {
