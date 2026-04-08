@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 12:30 AM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 12:45 AM</p>
 </div>
 
 <div class="container">
@@ -340,7 +340,6 @@
         <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 Upload File</button>
           <button class="btn btn-secondary" onclick="openAddUrlModal()">🔗 Link Online Manual</button>
-          <button class="btn btn-secondary" onclick="openOneDrivePicker('document')" style="background:var(--wave);">☁️ OneDrive</button>
         </div>
         <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="handleDocumentUpload(event)" style="display:none;">
       </div>
@@ -447,10 +446,7 @@
         <strong>📸 Photo Scan</strong>
         <small>Photo of nameplate/sticker — AI identifies details</small>
       </button>
-      <button class="method-button" onclick="selectVehicleMethod('onedrive')">
-        <strong>☁️ OneDrive</strong>
-        <small>Browse and select a file from your OneDrive — AI extracts details</small>
-      </button>
+
       <div class="modal-buttons">
         <button class="btn btn-secondary" onclick="closeAddVehicleModal()">Cancel</button>
       </div>
@@ -560,26 +556,6 @@
         </div>
       </div>
       <div id="vehiclePhotoResult" style="display:none;"></div>
-      <div class="modal-buttons">
-        <button class="btn btn-secondary" onclick="backToVehicleStep1()">Back</button>
-      </div>
-    </div>
-
-    <!-- Step 2d: OneDrive picker -->
-    <div id="vehicleStep2OneDrive" style="display:none;">
-      <p style="color:var(--stone);margin-bottom:1rem;">Select a file from OneDrive — AI will extract vehicle details from it.</p>
-      <div id="oneDrivePickerArea">
-        <button class="btn btn-primary" style="width:100%;padding:1.5rem;font-size:1.1rem;margin-bottom:1rem;" onclick="openOneDrivePicker('vehicle')">
-          ☁️ Open OneDrive File Picker
-        </button>
-        <p style="font-size:0.85rem;color:var(--stone);text-align:center;">Supports PDF, JPG, PNG — title, registration, manual cover</p>
-      </div>
-      <div id="oneDriveVehicleProcessing" style="display:none;">
-        <div class="ai-processing">
-          <p><span class="spinner"></span> Downloading from OneDrive and reading with AI...</p>
-        </div>
-      </div>
-      <div id="oneDriveVehicleResult" style="display:none;"></div>
       <div class="modal-buttons">
         <button class="btn btn-secondary" onclick="backToVehicleStep1()">Back</button>
       </div>
@@ -999,7 +975,6 @@
       (extras.length ? '<div style="font-size:0.8rem;color:var(--stone);margin-top:0.25rem;">Also linked: ' + extras.join(', ') + '</div>' : '') +
       (v.concerns && v.concerns.length ? '<div style="font-size:0.8rem;color:var(--accent);margin-top:0.5rem;">⚠️ ' + (Array.isArray(v.concerns) ? v.concerns.join(', ') : v.concerns) + '</div>' : '') +
       '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">' +
-        '<button class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;background:var(--wave);" onclick="event.stopPropagation();openVehicleOneDrivePicker(\'' + v.id + '\',\'' + safeName + '\')">☁️ Docs</button>' +
         '<button class="btn btn-primary" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();openEditVehicleModal(\'' + v.id + '\')">✏️ Edit</button>' +
         '<button class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();deleteVehicle(\'' + v.id + '\',\'' + safeName + '\')">🗑 Delete</button>' +
       '</div>' +
@@ -1259,7 +1234,7 @@
   function resetAddVehicleModal() {
     // Hide all step panels
     document.getElementById('vehicleStep1').style.display = 'block';
-    ['vehicleStep2Manual', 'vehicleStep2Document', 'vehicleStep2Photo', 'vehicleStep2OneDrive'].forEach(id => {
+    ['vehicleStep2Manual', 'vehicleStep2Document', 'vehicleStep2Photo'].forEach(id => {
       document.getElementById(id).style.display = 'none';
     });
     // Clear file inputs so the same file can be re-selected
@@ -1273,10 +1248,7 @@
     document.getElementById('vehiclePhotoProcessing').style.display = 'none';
     document.getElementById('vehiclePhotoResult').style.display = 'none';
     document.getElementById('vehiclePhotoResult').innerHTML = '';
-    document.getElementById('oneDriveVehicleProcessing').style.display = 'none';
-    document.getElementById('oneDriveVehicleResult').style.display = 'none';
-    document.getElementById('oneDriveVehicleResult').innerHTML = '';
-    document.getElementById('oneDrivePickerArea').style.display = 'block';
+
     // Clear manual form fields
     ['vehicleName','vehicleMake','vehicleModel','vehicleYear','vehicleEngine','vehicleHullVin','vehicleConcerns','vehicleNotes'].forEach(id => {
       const el = document.getElementById(id);
@@ -1304,7 +1276,7 @@
     document.getElementById('vehicleStep2Manual').style.display = method === 'manual' ? 'block' : 'none';
     document.getElementById('vehicleStep2Document').style.display = method === 'document' ? 'block' : 'none';
     document.getElementById('vehicleStep2Photo').style.display = method === 'photo' ? 'block' : 'none';
-    document.getElementById('vehicleStep2OneDrive').style.display = method === 'onedrive' ? 'block' : 'none';
+
   }
 
   function backToVehicleStep1() {
@@ -1617,216 +1589,6 @@
   }
 
   // ============================================================
-  // ONEDRIVE PICKER v8 — MSAL + postMessage popup
-  // ============================================================
-  // Uses Microsoft File Picker v8 with MSAL.js for personal OneDrive
-  // Popup communicates back via postMessage — works on GitHub Pages
-
-  const ONEDRIVE_CLIENT_ID = '3037a9b3-4733-45a6-af61-486b67c0c99e';
-  const OD_BASE_URL = 'https://onedrive.live.com/picker';
-
-  let _odContext = 'document';
-  let _odVehicleId = null;
-  let _odPort = null;
-  let _odWin = null;
-  let _msalApp = null;
-
-  function openOneDrivePicker(context) {
-    _odContext = context;
-    if (context === 'document') {
-      _odVehicleId = document.getElementById('docVehicleSelect').value;
-      if (!_odVehicleId) { showToast('Select a vehicle first.', 'error'); return; }
-    } else if (context === 'vehicle') {
-      _odVehicleId = null;
-    }
-    _launchOneDriveV8();
-  }
-
-  function openVehicleOneDrivePicker(vehicleId, vehicleName) {
-    _odContext = 'card';
-    _odVehicleId = vehicleId;
-    _launchOneDriveV8();
-  }
-
-  async function _getMsalApp() {
-    if (_msalApp) return _msalApp;
-    // Load MSAL if needed
-    if (typeof msal === 'undefined') {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js';
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    _msalApp = new msal.PublicClientApplication({
-      auth: {
-        clientId: ONEDRIVE_CLIENT_ID,
-        authority: 'https://login.microsoftonline.com/consumers',
-        redirectUri: window.location.origin + window.location.pathname
-      },
-      cache: { cacheLocation: 'sessionStorage' }
-    });
-    await _msalApp.initialize();
-    return _msalApp;
-  }
-
-  async function _getOneDriveToken() {
-    const app = await _getMsalApp();
-    const scopes = ['OneDrive.ReadOnly'];
-    try {
-      const accounts = app.getAllAccounts();
-      if (accounts.length > 0) {
-        const resp = await app.acquireTokenSilent({ scopes, account: accounts[0] });
-        return resp.accessToken;
-      }
-    } catch (e) { /* fall through to popup */ }
-    const resp = await app.loginPopup({ scopes });
-    app.setActiveAccount(resp.account);
-    const resp2 = await app.acquireTokenSilent({ scopes, account: resp.account });
-    return resp2.accessToken;
-  }
-
-  async function _launchOneDriveV8() {
-    try {
-      showToast('Opening OneDrive...');
-      const token = await _getOneDriveToken();
-
-      const channelId = genId();
-      const params = {
-        sdk: '8.0',
-        entry: { oneDrive: { files: {} } },
-        authentication: {},
-        messaging: {
-          origin: window.location.origin,
-          channelId
-        },
-        typesAndSources: {
-          mode: 'files',
-          filters: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'],
-          pivots: { oneDrive: true, recent: true }
-        },
-        selection: { mode: _odContext === 'card' ? 'multiple' : 'single' }
-      };
-
-      const qs = new URLSearchParams({ filePicker: JSON.stringify(params), locale: 'en-us' });
-      const url = `${OD_BASE_URL}?${qs}`;
-
-      // Open popup
-      _odWin = window.open('', 'OneDrivePicker', 'width=1080,height=680,left=100,top=100');
-
-      // POST form to the picker URL with the access token
-      const form = _odWin.document.createElement('form');
-      form.setAttribute('action', url);
-      form.setAttribute('method', 'POST');
-      const input = _odWin.document.createElement('input');
-      input.setAttribute('type', 'hidden');
-      input.setAttribute('name', 'access_token');
-      input.setAttribute('value', token);
-      form.appendChild(input);
-      _odWin.document.body.appendChild(form);
-      form.submit();
-
-      // Listen for messages from the picker
-      window.addEventListener('message', _oneDriveMessageHandler);
-
-    } catch (err) {
-      showToast('OneDrive: ' + (err.message || 'Could not open picker'), 'error');
-    }
-  }
-
-  function _oneDriveMessageHandler(event) {
-    if (!event.source || event.source !== _odWin) return;
-
-    // Establish MessageChannel on first message
-    if (event.data?.type === 'initialize' && event.data?.channelId) {
-      const mc = new MessageChannel();
-      _odPort = mc.port1;
-      _odPort.addEventListener('message', _oneDrivePortMessage);
-      _odPort.start();
-      event.source.postMessage({ type: 'activate' }, '*', [mc.port2]);
-    }
-  }
-
-  async function _oneDrivePortMessage(event) {
-    const data = event.data;
-    if (!data) return;
-
-    switch (data.command) {
-      case 'authenticate': {
-        try {
-          const token = await _getOneDriveToken();
-          _odPort.postMessage({ type: 'result', id: data.id, data: { result: 'token', token } });
-        } catch (e) {
-          _odPort.postMessage({ type: 'result', id: data.id, data: { result: 'error', error: { code: 'authFailed', message: e.message } } });
-        }
-        break;
-      }
-      case 'pick': {
-        // User selected files
-        const items = data.items || [];
-        _odPort.postMessage({ type: 'result', id: data.id, data: { result: 'success' } });
-        window.removeEventListener('message', _oneDriveMessageHandler);
-        if (_odWin) { _odWin.close(); _odWin = null; }
-
-        if (items.length === 0) break;
-
-        if (_odContext === 'vehicle') {
-          // Build a file-like object for the existing handler
-          const item = items[0];
-          const file = {
-            name: item.name,
-            size: item.size,
-            webUrl: item.webUrl,
-            '@microsoft.graph.downloadUrl': item.webUrl
-          };
-          handleOneDriveVehicleFile(file);
-        } else {
-          const files = items.map(item => ({
-            name: item.name,
-            size: item.size,
-            webUrl: item.webUrl,
-            '@microsoft.graph.downloadUrl': item.webUrl
-          }));
-          saveOneDriveDocuments(files, _odVehicleId);
-        }
-        break;
-      }
-      case 'close':
-        window.removeEventListener('message', _oneDriveMessageHandler);
-        if (_odWin) { _odWin.close(); _odWin = null; }
-        break;
-    }
-  }
-
-  async function saveOneDriveDocuments(files, vehicleId) {
-    if (!vehicleId) { showToast('No vehicle selected.', 'error'); return; }
-    let saved = 0;
-    for (const file of files) {
-      const doc = {
-        id: genId(),
-        vehicle_id: vehicleId,
-        file_name: file.name,
-        file_url: file['@microsoft.graph.downloadUrl'] || file.webUrl,
-        document_type: file.name.toLowerCase().endsWith('.pdf') ? 'manual' : 'vehicle_info',
-        file_size_bytes: file.size || null,
-        extracted_data: { source: 'onedrive', notes: 'Linked from OneDrive' }
-      };
-      try {
-        await sbInsert('FleetDocuments', doc);
-        saved++;
-      } catch (err) {
-        showToast('Error saving ' + file.name + ': ' + err.message, 'error');
-      }
-    }
-    if (saved > 0) {
-      showToast(saved === 1 ? files[0].name + ' linked from OneDrive!' : saved + ' files linked from OneDrive!');
-      loadDocumentsForVehicle();
-    }
-  }
-
-    // ============================================================
   // CHECKLISTS (AI-Generated)
   // ============================================================
   const SEASONS = [
@@ -2178,13 +1940,6 @@ Give practical, specific advice. Be concise but thorough. Reference the maintena
     const text = document.getElementById('shareTokenText').textContent;
     navigator.clipboard.writeText(text).then(() => showToast('Link copied!'));
   }
-
-  // ============================================================
-  // ONEDRIVE PICKER
-  // ============================================================
-  // Microsoft OneDrive file picker via SDK
-  // Docs: https://learn.microsoft.com/en-us/onedrive/developer/controls/file-pickers/js-v8/
-
 
     // ============================================================
   // INIT
