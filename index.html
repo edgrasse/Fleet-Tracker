@@ -105,6 +105,17 @@
     .toast.success { border-left: 4px solid var(--success); }
     .connection-badge { font-size: 0.82rem; color: var(--wave); cursor: pointer; margin-top: 0.4rem; }
     .connection-badge:hover { text-decoration: underline; }
+    .vehicle-detail-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--sand); padding-bottom: 0.75rem; }
+    .vehicle-detail-tab { padding: 0.45rem 1rem; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--stone); border-radius: 6px; }
+    .vehicle-detail-tab.active { background: var(--water); color: white; }
+    .detail-section { display: none; }
+    .detail-section.active { display: block; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    .info-item { background: var(--foam); border-radius: 8px; padding: 0.6rem 0.9rem; }
+    .info-item .lbl { font-size: 0.75rem; font-weight: 700; color: var(--stone); text-transform: uppercase; letter-spacing: 0.04em; }
+    .info-item .val { font-size: 0.95rem; color: var(--dark); margin-top: 0.15rem; font-weight: 500; }
+    .confirm-receipt { background: #fffdf0; border: 2px solid #f0d890; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -426,6 +437,83 @@
   </div>
 </div>
 
+<!-- VEHICLE DETAIL MODAL -->
+<div id="vehicleDetailModal" class="modal" onclick="if(event.target===this)closeModal('vehicleDetailModal')">
+  <div class="modal-content" style="max-width:700px;" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;gap:1rem;">
+      <div>
+        <h2 id="detailTitle" style="margin-bottom:0.25rem;"></h2>
+        <div id="detailSubtitle" style="color:var(--stone);font-size:0.9rem;"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" id="detailEditBtn" onclick="">✏️ Edit</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('vehicleDetailModal')">Close</button>
+      </div>
+    </div>
+    <div class="vehicle-detail-tabs">
+      <button class="vehicle-detail-tab active" onclick="switchDetailTab('overview',this)">Overview</button>
+      <button class="vehicle-detail-tab" onclick="switchDetailTab('maintenance',this)">🔧 Maintenance</button>
+      <button class="vehicle-detail-tab" onclick="switchDetailTab('documents',this)">📄 Documents</button>
+    </div>
+    <!-- Overview -->
+    <div id="detail-overview" class="detail-section active">
+      <div id="detailInfoGrid" class="info-grid"></div>
+      <div id="detailNotes"></div>
+      <div id="detailConnections"></div>
+    </div>
+    <!-- Maintenance -->
+    <div id="detail-maintenance" class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <span style="font-size:0.9rem;color:var(--stone);">All maintenance for this vehicle</span>
+        <button class="btn btn-primary btn-sm" id="detailAddMaintBtn">+ Add Entry</button>
+      </div>
+      <div id="detailMaintenanceList"></div>
+    </div>
+    <!-- Documents -->
+    <div id="detail-documents" class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <span style="font-size:0.9rem;color:var(--stone);">All documents for this vehicle</span>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-primary btn-sm" id="detailUploadBtn">📁 Upload</button>
+          <button class="btn btn-secondary btn-sm" onclick="openUrlModalFromDetail()">🔗 Link Manual</button>
+        </div>
+      </div>
+      <input type="file" id="detailFileInput" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleDetailFileUpload(event)">
+      <div id="detailUploadProgress" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span><span id="detailUploadMsg">Analyzing...</span></p></div></div>
+      <div id="detailDocList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT CONFIRM MODAL (from document upload) -->
+<div id="receiptConfirmModal" class="modal" onclick="if(event.target===this)closeModal('receiptConfirmModal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2>📄 Receipt Detected</h2>
+    <p style="color:var(--stone);margin-bottom:1.25rem;">AI extracted these details — verify and save to maintenance log.</p>
+    <div class="confirm-receipt">
+      <div class="form-group"><label>Type</label>
+        <select id="rcType">
+          <option value="oil_change">Oil Change</option><option value="winterization">Winterization</option>
+          <option value="commissioning">Commissioning</option><option value="inspection">Inspection</option>
+          <option value="repair">Repair</option><option value="other">Other</option>
+        </select>
+      </div>
+      <div class="two-col">
+        <div class="form-group"><label>Date</label><input type="date" id="rcDate"></div>
+        <div class="form-group"><label>Cost ($)</label><input type="number" id="rcCost" step="0.01"></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="rcDesc"></textarea></div>
+      <div class="form-group"><label>Completed By</label><input type="text" id="rcBy"></div>
+    </div>
+    <input type="hidden" id="rcVehicleId">
+    <input type="hidden" id="rcFileName">
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" onclick="closeModal('receiptConfirmModal');reopenVehicleDetail()">Skip — Save Doc Only</button>
+      <button class="btn btn-primary" onclick="saveReceiptConfirm()">✅ Save to Log</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
@@ -550,6 +638,11 @@
     sbGet('FleetConnections','')
       .then(data => { connections = Array.isArray(data) ? data : []; renderAccessories(); })
       .catch(() => { connections = []; });
+
+    // Always load maintenance log on startup
+    sbGet('FleetMaintenanceLog','order=created_at.desc')
+      .then(data => { maintenanceLog = Array.isArray(data) ? data : []; renderMaintenance(); })
+      .catch(() => { maintenanceLog = []; });
   }
 
   // ── RENDER VEHICLES ────────────────────────────────────────────
@@ -569,8 +662,9 @@
         (v.hull_vin ? '<strong>Hull/VIN:</strong> ' + v.hull_vin : '') +
       '</div>' +
       (parent ? '<div class="connection-badge" onclick="jumpToVehicle(\'' + parent.id + '\')">🔗 Connected to: ' + parent.name + ' →</div>' : '') +
-      '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;">' +
-        '<button class="btn btn-primary btn-sm" onclick="openEditModal(\'' + v.id + '\')">✏️ Edit</button>' +
+      '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">' +
+        '<button class="btn btn-primary btn-sm" onclick="openVehicleDetail(\'' + v.id + '\')">📋 View</button>' +
+        '<button class="btn btn-primary btn-sm" style="background:var(--wave);" onclick="openEditModal(\'' + v.id + '\')">✏️ Edit</button>' +
         '<button class="btn btn-danger btn-sm" onclick="deleteVehicle(\'' + v.id + '\',\'' + name + '\')">🗑 Delete</button>' +
       '</div>' +
     '</div>';
@@ -841,7 +935,12 @@
   // ── MAINTENANCE ────────────────────────────────────────────────
   function loadMaintenance() {
     sbGet('FleetMaintenanceLog','order=created_at.desc')
-      .then(data => { maintenanceLog = Array.isArray(data) ? data : []; renderMaintenance(); })
+      .then(data => {
+        maintenanceLog = Array.isArray(data) ? data : [];
+        renderMaintenance();
+        // If vehicle detail modal is open, refresh its maintenance list too
+        if (currentDetailVehicleId) loadDetailMaintenance(currentDetailVehicleId);
+      })
       .catch(() => { maintenanceLog = []; renderMaintenance(); });
   }
 
@@ -994,48 +1093,278 @@
     if (!files.length) return;
     const vehicleId = document.getElementById('docVehicleSelect').value;
     if (!vehicleId) { showToast('Select a vehicle first.', 'error'); event.target.value=''; return; }
+    await processFileUploads(files, vehicleId, false);
+    event.target.value = '';
+  }
 
-    const prog = document.getElementById('uploadProgress');
-    const msg = document.getElementById('uploadMsg');
-    prog.style.display = 'block';
-    let saved = 0;
+  async function handleDetailFileUpload(event) {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+    const vehicleId = currentDetailVehicleId;
+    if (!vehicleId) return;
+    await processFileUploads(files, vehicleId, true);
+    event.target.value = '';
+  }
+
+  async function processFileUploads(files, vehicleId, fromDetail) {
+    const prog = fromDetail ? document.getElementById('detailUploadProgress') : document.getElementById('uploadProgress');
+    const msg = fromDetail ? document.getElementById('detailUploadMsg') : document.getElementById('uploadMsg');
+    if (prog) prog.style.display = 'block';
+
+    let pendingReceipt = null; // hold one receipt for confirmation modal
 
     for (let i=0; i<files.length; i++) {
       const file = files[i];
-      msg.textContent = 'Analyzing ' + (i+1) + ' of ' + files.length + ': ' + file.name + '...';
+      if (msg) msg.textContent = 'Analyzing ' + (i+1) + ' of ' + files.length + ': ' + file.name + '...';
+
+      // Detect if it looks like a receipt
+      const lname = file.name.toLowerCase();
+      const isReceiptName = lname.includes('receipt') || lname.includes('invoice') || lname.includes('bill');
+
       let extractedData = {};
+      let isReceipt = false;
+      let receiptResult = null;
+
       try {
         const base64 = await fileToBase64(file);
-        const result = await callClaude('extractVehicleDocument', base64, file.type);
-        if (result) {
-          extractedData = {
-            summary: [result.name,result.make,result.model,result.year,result.engine_type].filter(Boolean).join(' · '),
-            notes: result.notes||null
-          };
+
+        // Always try receipt extraction first for PDFs/images that might be receipts
+        // We'll ask the AI to determine the doc type
+        try {
+          receiptResult = await callClaude('extractReceipt', base64, file.type);
+          // If AI found a description with real content, treat as receipt
+          if (receiptResult && receiptResult.description && receiptResult.description.length > 10) {
+            isReceipt = true;
+            extractedData = { summary: receiptResult.description, notes: null };
+          }
+        } catch(e) { /* not a receipt */ }
+
+        // If not identified as receipt, try vehicle doc extraction for summaries
+        if (!isReceipt) {
+          try {
+            const vResult = await callClaude('extractVehicleDocument', base64, file.type);
+            if (vResult) {
+              extractedData = {
+                summary: [vResult.name,vResult.make,vResult.model,vResult.year,vResult.engine_type].filter(Boolean).join(' · '),
+                notes: vResult.notes||null
+              };
+            }
+          } catch(e) {}
         }
-      } catch(e) { /* save without AI analysis */ }
+      } catch(e) { /* save without analysis */ }
 
-      const docType = file.name.toLowerCase().includes('receipt') ? 'maintenance_receipt'
-        : file.name.toLowerCase().includes('manual') ? 'manual' : 'manual';
+      const docType = isReceipt ? 'maintenance_receipt'
+        : lname.includes('manual') ? 'manual'
+        : lname.includes('title') || lname.includes('registration') ? 'vehicle_info'
+        : 'manual';
 
+      // Save the document record
+      const docId = genId();
       try {
         await sbInsert('FleetDocuments', {
-          id: genId(), vehicle_id: vehicleId,
-          file_name: file.name, file_url: '',  // no storage yet
+          id: docId, vehicle_id: vehicleId,
+          file_name: file.name, file_url: '',
           document_type: docType,
           file_size_bytes: file.size||null,
           extracted_data: extractedData
         });
-        saved++;
-      } catch(e) { showToast('Error saving ' + file.name, 'error'); }
+      } catch(e) { showToast('Error saving ' + file.name, 'error'); continue; }
+
+      // If it's a receipt, queue it for the confirmation modal
+      if (isReceipt && receiptResult) {
+        pendingReceipt = { vehicleId, fileName: file.name, result: receiptResult };
+      }
     }
 
-    prog.style.display = 'none';
-    event.target.value = '';
-    if (saved > 0) {
-      showToast(saved === 1 ? files[0].name + ' saved!' : saved + ' files saved!');
+    if (prog) prog.style.display = 'none';
+    showToast(files.length === 1 ? files[0].name + ' saved!' : files.length + ' files saved!');
+
+    // Refresh document lists
+    if (fromDetail) {
+      loadDetailDocuments(vehicleId);
+    } else {
       onDocVehicleChange();
     }
+
+    // Show receipt confirmation modal if we found receipt data
+    if (pendingReceipt) {
+      setTimeout(() => {
+        if (fromDetail) closeModal('vehicleDetailModal');
+        openReceiptConfirm(pendingReceipt.vehicleId, pendingReceipt.fileName, pendingReceipt.result, fromDetail);
+      }, 300);
+    }
+  }
+
+  // ── RECEIPT CONFIRM (from document upload) ─────────────────────
+  let receiptConfirmFromDetail = false;
+
+  function openReceiptConfirm(vehicleId, fileName, result, fromDetail) {
+    receiptConfirmFromDetail = fromDetail;
+    document.getElementById('rcVehicleId').value = vehicleId;
+    document.getElementById('rcFileName').value = fileName;
+    if (result.maintenance_type) document.getElementById('rcType').value = result.maintenance_type;
+    document.getElementById('rcDate').value = result.date||'';
+    document.getElementById('rcCost').value = result.cost||'';
+    document.getElementById('rcDesc').value = result.description||'';
+    document.getElementById('rcBy').value = result.completed_by||'';
+    document.getElementById('receiptConfirmModal').classList.add('active');
+  }
+
+  function reopenVehicleDetail() {
+    if (receiptConfirmFromDetail && currentDetailVehicleId) {
+      setTimeout(() => openVehicleDetail(currentDetailVehicleId), 200);
+    }
+  }
+
+  async function saveReceiptConfirm() {
+    const vehicleId = document.getElementById('rcVehicleId').value;
+    const desc = document.getElementById('rcDesc').value.trim();
+    if (!desc) { showToast('Description required.', 'error'); return; }
+    try {
+      await sbInsert('FleetMaintenanceLog', {
+        id: genId(), vehicle_id: vehicleId,
+        maintenance_type: document.getElementById('rcType').value||'other',
+        date: document.getElementById('rcDate').value||null, season_year: null,
+        description: desc,
+        cost: document.getElementById('rcCost').value ? parseFloat(document.getElementById('rcCost').value) : null,
+        completed_by: document.getElementById('rcBy').value.trim()||null
+      });
+      // Refresh maintenance data
+      const data = await sbGet('FleetMaintenanceLog','order=created_at.desc');
+      maintenanceLog = Array.isArray(data) ? data : [];
+      renderMaintenance();
+      closeModal('receiptConfirmModal');
+      showToast('✅ Receipt logged to maintenance!');
+      if (receiptConfirmFromDetail) {
+        setTimeout(() => openVehicleDetail(vehicleId), 200);
+      }
+    } catch(err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  // ── VEHICLE DETAIL MODAL ───────────────────────────────────────
+  let currentDetailVehicleId = null;
+
+  function openVehicleDetail(vehicleId) {
+    currentDetailVehicleId = vehicleId;
+    const v = vehicles.find(v => v.id===vehicleId);
+    if (!v) return;
+
+    document.getElementById('detailTitle').textContent = v.name || 'Vehicle';
+    document.getElementById('detailSubtitle').textContent =
+      [typeLabel(v.type), v.year ? String(v.year) : '', v.make, v.model].filter(Boolean).join(' · ');
+
+    document.getElementById('detailEditBtn').setAttribute('onclick', 'closeModal("vehicleDetailModal");openEditModal("' + vehicleId + '")');
+    document.getElementById('detailAddMaintBtn').setAttribute('onclick',
+      'closeModal("vehicleDetailModal");openMaintenanceModalForVehicle("' + vehicleId + '")');
+    document.getElementById('detailUploadBtn').setAttribute('onclick', 'document.getElementById("detailFileInput").click()');
+
+    // Switch to overview tab
+    switchDetailTab('overview', document.querySelector('.vehicle-detail-tab'));
+
+    // Build overview
+    const fields = [
+      ['Make', v.make], ['Model', v.model], ['Year', v.year],
+      ['Engine', v.engine_type], ['Hull / VIN', v.hull_vin], ['Type', typeLabel(v.type)]
+    ].filter(([,val]) => val);
+    document.getElementById('detailInfoGrid').innerHTML = fields.map(([lbl,val]) =>
+      '<div class="info-item"><div class="lbl">' + lbl + '</div><div class="val">' + val + '</div></div>'
+    ).join('');
+    document.getElementById('detailNotes').innerHTML = v.notes
+      ? '<div style="background:var(--foam);border-radius:8px;padding:0.75rem 1rem;font-size:0.9rem;color:var(--dark);margin-top:0.25rem;"><strong style="color:var(--stone);font-size:0.75rem;text-transform:uppercase;">Notes</strong><p style="margin-top:0.3rem;">' + v.notes + '</p></div>'
+      : '';
+
+    // Connected items
+    const connected = connections.filter(c=>c.vehicle_id===vehicleId)
+      .map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
+    document.getElementById('detailConnections').innerHTML = connected.length
+      ? '<div style="margin-top:0.75rem;"><strong style="color:var(--stone);font-size:0.8rem;text-transform:uppercase;">Connected Equipment</strong>' +
+        connected.map(a=>'<div style="font-size:0.9rem;padding:0.4rem 0;border-bottom:1px solid var(--sand);">🔩 ' + a.name + ' (' + typeLabel(a.type) + ')</div>').join('') + '</div>'
+      : '';
+
+    document.getElementById('vehicleDetailModal').classList.add('active');
+    loadDetailMaintenance(vehicleId);
+    loadDetailDocuments(vehicleId);
+  }
+
+  function switchDetailTab(tab, btn) {
+    document.querySelectorAll('.detail-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.vehicle-detail-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('detail-' + tab).classList.add('active');
+    if (btn) btn.classList.add('active');
+    else document.querySelectorAll('.vehicle-detail-tab')[['overview','maintenance','documents'].indexOf(tab)]?.classList.add('active');
+  }
+
+  function loadDetailMaintenance(vehicleId) {
+    const list = document.getElementById('detailMaintenanceList');
+    const items = maintenanceLog.filter(e => e.vehicle_id===vehicleId);
+    if (!items.length) {
+      list.innerHTML = '<div class="empty-state" style="padding:1.5rem 0;"><p>No maintenance entries yet.</p></div>';
+      return;
+    }
+    list.innerHTML = items.map(e =>
+      '<div class="maint-item">' +
+        '<div class="header"><div>' +
+          '<span class="type-badge" style="background:var(--wave);">' + maintTypeLabel(e.maintenance_type) + '</span>' +
+        '</div><div style="text-align:right;">' +
+          '<div style="font-size:0.85rem;color:var(--stone);">' + (e.date ? formatDate(e.date) : (e.season_year||'')) + '</div>' +
+          (e.cost ? '<div style="font-weight:700;color:var(--accent);">' + fmtCost(e.cost) + '</div>' : '') +
+        '</div></div>' +
+        '<div style="font-size:0.9rem;margin:0.25rem 0;">' + (e.description||'') + '</div>' +
+        (e.completed_by ? '<div style="font-size:0.82rem;color:var(--stone);">By: ' + e.completed_by + '</div>' : '') +
+      '</div>'
+    ).join('');
+  }
+
+  function loadDetailDocuments(vehicleId) {
+    sbGet('FleetDocuments', 'vehicle_id=eq.' + vehicleId + '&order=uploaded_date.desc')
+      .then(data => {
+        const docs = Array.isArray(data) ? data : [];
+        const list = document.getElementById('detailDocList');
+        if (!docs.length) {
+          list.innerHTML = '<div class="empty-state" style="padding:1.5rem 0;"><p>No documents yet. Upload files or link a manual above.</p></div>';
+          return;
+        }
+        const tl = {manual:'Manual',parts_diagram:'Parts',spec_sheet:'Spec Sheet',vehicle_info:'Vehicle Info',
+          maintenance_receipt:'Receipt',url_link:'Online Manual',other:'Document'};
+        list.innerHTML = docs.map(d => {
+          const isUrl = d.document_type === 'url_link';
+          const label = tl[d.document_type] || 'Document';
+          const notes = (d.extracted_data && (d.extracted_data.summary || d.extracted_data.notes)) || '';
+          return '<div class="doc-item">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">' +
+              '<div>' +
+                '<span class="type-badge" style="background:' + (isUrl?'var(--accent)':'var(--wave)') + ';">' + (isUrl?'🔗 ':'📄 ') + label + '</span>' +
+                '<h4 style="margin-top:0.3rem;">' + d.file_name + '</h4>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:0.5rem;">' +
+                '<span style="font-size:0.8rem;color:var(--stone);">' + formatDate(d.uploaded_date) + '</span>' +
+                '<button class="btn btn-danger btn-sm" onclick="deleteDocFromDetail(\'' + d.id + '\')">🗑</button>' +
+              '</div>' +
+            '</div>' +
+            (d.file_url ? '<a href="' + d.file_url + '" target="_blank" rel="noopener" style="font-size:0.85rem;color:var(--water);font-weight:600;">' + (isUrl?'Open Manual →':'View File →') + '</a>' : '') +
+            (notes ? '<div style="font-size:0.82rem;color:var(--stone);margin-top:0.35rem;">' + notes + '</div>' : '') +
+          '</div>';
+        }).join('');
+      }).catch(()=>{});
+  }
+
+  function deleteDocFromDetail(id) {
+    if (!confirm('Remove this document?')) return;
+    sbDelete('FleetDocuments', id)
+      .then(() => { showToast('Removed.'); loadDetailDocuments(currentDetailVehicleId); })
+      .catch(err => showToast('Error: ' + err.message, 'error'));
+  }
+
+  function openMaintenanceModalForVehicle(vehicleId) {
+    openMaintenanceModal();
+    setTimeout(() => { document.getElementById('mVehicle').value = vehicleId; }, 100);
+  }
+
+  function openUrlModalFromDetail() {
+    // Pre-select this vehicle in the documents tab select too
+    openUrlModal();
+    // Store the vehicle id so saveUrlDoc can use currentDetailVehicleId if docVehicleSelect is empty
+    document.getElementById('docVehicleSelect').value = currentDetailVehicleId;
   }
 
   function deleteDoc(id) {
