@@ -263,7 +263,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 1:05 AM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 8, 2026 — 1:15 AM</p>
 </div>
 
 <div class="container">
@@ -329,7 +329,7 @@
   <div id="documents" class="section">
     <div class="card">
       <h3>📄 Documents</h3>
-      <p style="margin-bottom:1.5rem;color:var(--stone)">Upload files or link online manuals for each vehicle.</p>
+      <p style="margin-bottom:1.5rem;color:var(--stone)">Upload manuals, receipts, and vehicle documents. AI will analyze each file and extract useful details.</p>
       <div style="margin-bottom:1.5rem;">
         <label>Select Vehicle</label>
         <select id="docVehicleSelect" onchange="loadDocumentsForVehicle()">
@@ -337,11 +337,16 @@
         </select>
       </div>
       <div id="uploadSection" style="display:none;">
-        <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 Upload File</button>
+        <div style="display:flex;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 Upload Files</button>
           <button class="btn btn-secondary" onclick="openAddUrlModal()">🔗 Link Online Manual</button>
         </div>
         <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="handleDocumentUpload(event)" style="display:none;">
+        <div id="uploadProgress" style="display:none;">
+          <div class="ai-processing">
+            <p><span class="spinner"></span> <span id="uploadProgressText">Analyzing documents...</span></p>
+          </div>
+        </div>
       </div>
       <div id="documentsList"></div>
     </div>
@@ -1205,6 +1210,124 @@
         loadDocumentsForVehicle();
       })
       .catch(err => showToast('Error: ' + err.message, 'error'));
+  }
+
+
+  // ============================================================
+  // DOCUMENTS
+  // ============================================================
+  function loadDocumentsForVehicle() {
+    const vehicleId = document.getElementById('docVehicleSelect').value;
+    const uploadSection = document.getElementById('uploadSection');
+    const list = document.getElementById('documentsList');
+    uploadSection.style.display = vehicleId ? 'block' : 'none';
+    list.innerHTML = '';
+    if (!vehicleId) return;
+    sbGet('FleetDocuments', `vehicle_id=eq.${vehicleId}&order=uploaded_date.desc`)
+      .then(docs => renderDocuments(docs || []))
+      .catch(() => { list.innerHTML = '<p style="color:var(--stone);padding:1rem 0;">Could not load documents.</p>'; });
+  }
+
+  function renderDocuments(docs) {
+    const list = document.getElementById('documentsList');
+    if (!docs.length) {
+      list.innerHTML = '<p style="color:var(--stone);padding:1rem 0;">No documents yet. Upload files or link an online manual above.</p>';
+      return;
+    }
+    const typeLabels = { manual:'Manual', parts_diagram:'Parts', spec_sheet:'Spec Sheet', vehicle_info:'Vehicle Info', maintenance_receipt:'Receipt', url_link:'Online Manual', other:'Document' };
+    list.innerHTML = docs.map(d => {
+      const isUrl = d.document_type === 'url_link';
+      const tLabel = typeLabels[d.document_type] || d.document_type || 'Document';
+      const notes = d.extracted_data?.notes || d.extracted_data?.summary || '';
+      return '<div class="maintenance-item" style="border-left-color:var(--water);">' +
+        '<div class="m-header"><div>' +
+        '<span class="type-badge" style="background:' + (isUrl ? 'var(--accent)' : 'var(--wave)') + ';">' + (isUrl ? '🔗' : '📄') + ' ' + tLabel + '</span>' +
+        '<h4 style="margin-top:0.4rem;">' + d.file_name + '</h4></div>' +
+        '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+        '<span style="font-size:0.85rem;color:var(--stone);">' + (formatDate(d.uploaded_date) || '') + '</span>' +
+        '<button class="btn btn-danger" style="padding:0.3rem 0.7rem;font-size:0.75rem;" onclick="deleteDocument('' + d.id + '')">🗑</button>' +
+        '</div></div>' +
+        (d.file_url ? '<a href="' + d.file_url + '" target="_blank" rel="noopener" style="font-size:0.9rem;color:var(--water);font-weight:600;">' + (isUrl ? 'Open Manual →' : 'View File →') + '</a>' : '') +
+        (notes ? '<div style="font-size:0.85rem;color:var(--stone);margin-top:0.4rem;">' + notes + '</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  function deleteDocument(id) {
+    if (!confirm('Remove this document?')) return;
+    sbDelete('FleetDocuments', id)
+      .then(() => { showToast('Document removed.'); loadDocumentsForVehicle(); })
+      .catch(err => showToast('Error: ' + err.message, 'error'));
+  }
+
+  async function handleDocumentUpload(event) {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+    const vehicleId = document.getElementById('docVehicleSelect').value;
+    if (!vehicleId) { showToast('Select a vehicle first.', 'error'); event.target.value = ''; return; }
+
+    const progress = document.getElementById('uploadProgress');
+    const progressText = document.getElementById('uploadProgressText');
+    progress.style.display = 'block';
+
+    let saved = 0;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      progressText.textContent = `Analyzing ${i + 1} of ${files.length}: ${file.name}...`;
+
+      try {
+        // Convert to base64 and send to Claude for analysis
+        const base64Data = await fileToBase64(file);
+        const mediaType = file.type || 'application/pdf';
+
+        let extractedData = { notes: null, summary: null };
+        try {
+          const result = await callClaude('extractVehicleDocument', base64Data, mediaType);
+          if (result) {
+            extractedData = {
+              summary: [result.name, result.make, result.model, result.year, result.engine_type]
+                .filter(Boolean).join(' · ') || null,
+              notes: result.notes || null,
+              ai_extracted: result
+            };
+          }
+        } catch (aiErr) {
+          // AI failed — save without analysis
+          console.log('AI analysis skipped:', aiErr.message);
+        }
+
+        // Save to Supabase as a document record
+        // For now we store the file name and extracted info
+        // Full file storage requires Supabase Storage (future build)
+        const docType = file.name.toLowerCase().includes('receipt') ? 'maintenance_receipt'
+          : file.name.toLowerCase().includes('manual') ? 'manual'
+          : file.name.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? 'vehicle_info'
+          : 'manual';
+
+        const doc = {
+          id: genId(),
+          vehicle_id: vehicleId,
+          file_name: file.name,
+          file_url: null,  // No storage URL yet — future build
+          document_type: docType,
+          file_size_bytes: file.size || null,
+          extracted_data: extractedData
+        };
+
+        await sbInsert('FleetDocuments', doc);
+        saved++;
+      } catch (err) {
+        showToast('Error saving ' + file.name + ': ' + err.message, 'error');
+      }
+    }
+
+    progress.style.display = 'none';
+    event.target.value = '';
+
+    if (saved > 0) {
+      showToast(saved === 1 ? files[0].name + ' saved!' : saved + ' files saved!');
+      loadDocumentsForVehicle();
+    }
   }
 
   function isAccessoryType(type) {
