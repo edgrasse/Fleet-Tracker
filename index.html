@@ -263,12 +263,13 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 11:15 PM</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.4rem;">Build: April 7, 2026 — 11:50 PM</p>
 </div>
 
 <div class="container">
   <div class="nav-tabs">
     <button class="active" onclick="showSection('vehicles', this)">🚤 Vehicles</button>
+    <button onclick="showSection('accessories', this)">🔩 Accessories</button>
     <button onclick="showSection('maintenance', this)">🔧 Maintenance</button>
     <button onclick="showSection('documents', this)">📄 Documents</button>
     <button onclick="showSection('checklists', this)">☑️ Checklists</button>
@@ -284,6 +285,16 @@
       <button class="btn btn-primary" onclick="openAddVehicleModal()">+ Add Vehicle</button>
     </div>
     <div id="vehicleGrid" class="vehicle-grid"></div>
+  </div>
+
+  <!-- 1b. Accessories Section -->
+  <div id="accessories" class="section">
+    <div class="card">
+      <h3>🔩 Accessories & Attached Equipment</h3>
+      <p style="margin-bottom:1.5rem;color:var(--stone)">Trailers, fish finders, boat lifts, and other equipment connected to your fleet.</p>
+      <button class="btn btn-primary" onclick="openAddVehicleModal()">+ Add Accessory</button>
+    </div>
+    <div id="accessoryGrid" class="vehicle-grid"></div>
   </div>
 
   <!-- 2. Maintenance Section -->
@@ -454,7 +465,7 @@
         </div>
         <div class="form-group">
           <label>Vehicle Type *</label>
-          <select id="vehicleType" required onchange="toggleCustomType('vehicleType','vehicleTypeCustom')">
+          <select id="vehicleType" required onchange="toggleCustomType('vehicleType','vehicleTypeCustom');toggleConnectedToField('vehicleType','connectedToGroup')">
             <option value="">Select type...</option>
             <option value="boat">⛵ Boat</option>
             <option value="snowmobile">🏂 Snowmobile</option>
@@ -488,6 +499,19 @@
       <div class="form-group">
         <label>Hull/VIN Number</label>
         <input type="text" id="vehicleHullVin" placeholder="e.g., GW00012345">
+      </div>
+      <div class="form-group" id="connectedToGroup" style="display:none;">
+        <label>Connected To (Primary Vehicle)</label>
+        <select id="vehicleConnectedTo">
+          <option value="">None</option>
+        </select>
+        <label style="margin-top:0.75rem;">Additional Connections</label>
+        <div id="vehicleAdditionalConnections" style="font-size:0.9rem;color:var(--stone);margin-top:0.25rem;">Select primary first, then add more below if needed.</div>
+        <select id="vehicleAdditionalConnect" style="margin-top:0.5rem;">
+          <option value="">+ Add another connection...</option>
+        </select>
+        <div id="vehicleAdditionalList" style="margin-top:0.5rem;"></div>
+        <button type="button" class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;margin-top:0.5rem;" onclick="addAdditionalConnection('vehicleAdditionalConnect','vehicleAdditionalList')">+ Add Connection</button>
       </div>
       <div class="form-group">
         <label>Concerns (comma-separated)</label>
@@ -742,7 +766,7 @@
       </div>
       <div class="form-group">
         <label>Vehicle Type *</label>
-        <select id="editVehicleType" onchange="toggleCustomType('editVehicleType','editVehicleTypeCustom')">
+        <select id="editVehicleType" onchange="toggleCustomType('editVehicleType','editVehicleTypeCustom');toggleConnectedToField('editVehicleType','editConnectedToGroup')">
           <option value="">Select type...</option>
           <option value="boat">⛵ Boat</option>
           <option value="snowmobile">🏂 Snowmobile</option>
@@ -777,6 +801,18 @@
       <label>Hull/VIN Number</label>
       <input type="text" id="editVehicleHullVin" placeholder="e.g., SERV5243C292">
     </div>
+    <div class="form-group" id="editConnectedToGroup" style="display:none;">
+      <label>Connected To (Primary Vehicle)</label>
+      <select id="editVehicleConnectedTo">
+        <option value="">None</option>
+      </select>
+      <label style="margin-top:0.75rem;">Additional Connections</label>
+      <select id="editVehicleAdditionalConnect" style="margin-top:0.5rem;">
+        <option value="">+ Add another connection...</option>
+      </select>
+      <div id="editVehicleAdditionalList" style="margin-top:0.5rem;"></div>
+      <button type="button" class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;margin-top:0.5rem;" onclick="addAdditionalConnection('editVehicleAdditionalConnect','editVehicleAdditionalList')">+ Add Connection</button>
+    </div>
     <div class="form-group">
       <label>Concerns (comma-separated)</label>
       <textarea id="editVehicleConcerns" style="min-height:60px" placeholder="e.g., Saltwater corrosion, Winterization"></textarea>
@@ -806,6 +842,7 @@
   // STATE
   // ============================================================
   let vehicles = [];
+  let connections = []; // FleetConnections records
   let maintenanceLog = [];
   let checklists = {}; // { vehicleId: { spring: {...}, fall: {...}, ... } }
   let advisorHistory = []; // chat history per vehicle
@@ -925,41 +962,95 @@
   // VEHICLES
   // ============================================================
   function loadVehicles() {
-    sbGet('FleetVehicles', 'order=name.asc')
-      .then(data => {
+    Promise.all([
+      sbGet('FleetVehicles', 'order=name.asc'),
+      sbGet('FleetConnections', '')
+    ]).then(([vData, cData]) => {
+      vehicles = vData || [];
+      connections = cData || [];
+      renderVehicles();
+      renderAccessories();
+      populateVehicleSelects();
+    }).catch(() => {
+      sbGet('FleetVehicles', 'order=name.asc').then(data => {
         vehicles = data || [];
+        connections = [];
         renderVehicles();
+        renderAccessories();
         populateVehicleSelects();
-      })
-      .catch(() => { vehicles = []; renderVehicles(); });
+      }).catch(() => { vehicles = []; renderVehicles(); });
+    });
+  }
+
+  function vehicleCardHTML(v, showParent) {
+    const parentVehicle = showParent && v._parentId ? vehicles.find(p => p.id === v._parentId) : null;
+    const extras = (v._additionalIds || []).map(id => vehicles.find(p => p.id === id)?.name).filter(Boolean);
+    const safeName = (v.name||'').replace(/'/g, "\\'");
+    return '<div class="vehicle-card">' +
+      '<span class="vehicle-type">' + typeDisplayLabel(v.type) + '</span>' +
+      '<h4>' + (v.name || 'Unnamed') + '</h4>' +
+      '<div class="vehicle-details">' +
+        (v.make ? '<strong>Make:</strong> ' + v.make + '<br>' : '') +
+        (v.model ? '<strong>Model:</strong> ' + v.model + '<br>' : '') +
+        (v.year ? '<strong>Year:</strong> ' + v.year + '<br>' : '') +
+        (v.engine_type ? '<strong>Engine:</strong> ' + v.engine_type + '<br>' : '') +
+        (v.hull_vin ? '<strong>Hull/VIN:</strong> ' + v.hull_vin : '') +
+      '</div>' +
+      (parentVehicle ? '<div style="margin-top:0.5rem;font-size:0.85rem;color:var(--wave);cursor:pointer;" onclick="jumpToVehicle(\'' + parentVehicle.id + '\')">🔗 Connected to: <strong>' + parentVehicle.name + '</strong> →</div>' : '') +
+      (extras.length ? '<div style="font-size:0.8rem;color:var(--stone);margin-top:0.25rem;">Also linked: ' + extras.join(', ') + '</div>' : '') +
+      (v.concerns && v.concerns.length ? '<div style="font-size:0.8rem;color:var(--accent);margin-top:0.5rem;">⚠️ ' + (Array.isArray(v.concerns) ? v.concerns.join(', ') : v.concerns) + '</div>' : '') +
+      '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">' +
+        '<button class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;background:var(--wave);" onclick="event.stopPropagation();openVehicleOneDrivePicker(\'' + v.id + '\',\'' + safeName + '\')">☁️ Docs</button>' +
+        '<button class="btn btn-primary" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();openEditVehicleModal(\'' + v.id + '\')">✏️ Edit</button>' +
+        '<button class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();deleteVehicle(\'' + v.id + '\',\'' + safeName + '\')">🗑 Delete</button>' +
+      '</div>' +
+    '</div>';
   }
 
   function renderVehicles() {
     const grid = document.getElementById('vehicleGrid');
-    if (!vehicles.length) {
+    const vList = vehicles.filter(v => !isAccessoryType(v.type));
+    if (!vList.length) {
       grid.innerHTML = '<div class="empty-state"><p>No vehicles yet. Add your first vehicle to get started!</p></div>';
       return;
     }
-    grid.innerHTML = vehicles.map(v => `
-      <div class="vehicle-card">
-        <span class="vehicle-type">${typeDisplayLabel(v.type)}</span>
-        <h4>${v.name || 'Unnamed'}</h4>
-        <div class="vehicle-details">
-          ${v.make ? `<strong>Make:</strong> ${v.make}<br>` : ''}
-          ${v.model ? `<strong>Model:</strong> ${v.model}<br>` : ''}
-          ${v.year ? `<strong>Year:</strong> ${v.year}<br>` : ''}
-          ${v.engine_type ? `<strong>Engine:</strong> ${v.engine_type}<br>` : ''}
-          ${v.hull_vin ? `<strong>Hull/VIN:</strong> ${v.hull_vin}` : ''}
-        </div>
-        ${v.concerns && v.concerns.length ? `<div style="font-size:0.8rem;color:var(--accent);margin-top:0.5rem;">⚠️ ${Array.isArray(v.concerns) ? v.concerns.join(', ') : v.concerns}</div>` : ''}
-        <div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
-          <button class="btn btn-secondary" style="padding:0.4rem 0.9rem;font-size:0.8rem;background:var(--wave);" onclick="event.stopPropagation();openVehicleOneDrivePicker('${v.id}','${(v.name||'').replace(/'/g,"\\'")}')">☁️ Docs</button>
-          <button class="btn btn-primary" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();openEditVehicleModal('${v.id}')">✏️ Edit</button>
-          <button class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.8rem;" onclick="event.stopPropagation();deleteVehicle('${v.id}','${(v.name||'').replace(/'/g,"\\'")}')">🗑 Delete</button>
-        </div>
-      </div>
-    `).join('');
+    grid.innerHTML = vList.map(v => vehicleCardHTML(v, false)).join('');
   }
+
+  function renderAccessories() {
+    const grid = document.getElementById('accessoryGrid');
+    if (!grid) return;
+    const aList = vehicles.filter(v => isAccessoryType(v.type));
+    if (!aList.length) {
+      grid.innerHTML = '<div class="empty-state"><p>No accessories yet. Add a trailer, fish finder, boat lift, or other equipment.</p></div>';
+      return;
+    }
+    const enriched = aList.map(v => ({
+      ...v,
+      _parentId: connections.find(cn => cn.item_id === v.id && cn.connection_type === 'primary')?.vehicle_id || null,
+      _additionalIds: connections.filter(cn => cn.item_id === v.id && cn.connection_type === 'additional').map(cn => cn.vehicle_id)
+    }));
+    grid.innerHTML = enriched.map(v => vehicleCardHTML(v, true)).join('');
+  }
+
+  function jumpToVehicle(vehicleId) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById('vehicles').classList.add('active');
+    document.querySelector('.nav-tabs button').classList.add('active');
+    setTimeout(() => {
+      const v = vehicles.find(v => v.id === vehicleId);
+      if (!v) return;
+      document.querySelectorAll('#vehicleGrid .vehicle-card').forEach(card => {
+        if (card.querySelector('h4')?.textContent === v.name) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.boxShadow = '0 0 0 3px var(--accent)';
+          setTimeout(() => card.style.boxShadow = '', 2000);
+        }
+      });
+    }, 100);
+  }
+
 
   function deleteVehicle(id, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -991,6 +1082,26 @@
     document.getElementById('editVehicleNotes').value = v.notes || '';
     const concerns = Array.isArray(v.concerns) ? v.concerns.join(', ') : (v.concerns || '');
     document.getElementById('editVehicleConcerns').value = concerns;
+    // Show/hide connected-to group
+    const editGrp = document.getElementById('editConnectedToGroup');
+    if (editGrp) editGrp.style.display = isAccessoryType(v.type) ? 'block' : 'none';
+    // Pre-fill connections
+    const primaryConn = connections.find(cn => cn.item_id === v.id && cn.connection_type === 'primary');
+    const editPrimary = document.getElementById('editVehicleConnectedTo');
+    if (editPrimary) editPrimary.value = primaryConn?.vehicle_id || '';
+    const additionalList = document.getElementById('editVehicleAdditionalList');
+    if (additionalList) {
+      additionalList.innerHTML = '';
+      connections.filter(cn => cn.item_id === v.id && cn.connection_type === 'additional').forEach(cn => {
+        const parent = vehicles.find(p => p.id === cn.vehicle_id);
+        if (!parent) return;
+        const tag = document.createElement('div');
+        tag.dataset.id = cn.vehicle_id;
+        tag.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;background:var(--wave);color:white;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.8rem;margin:0.2rem;';
+        tag.innerHTML = parent.name + ' <span style="cursor:pointer;font-weight:700;" onclick="this.parentElement.remove()">×</span>';
+        additionalList.appendChild(tag);
+      });
+    }
     document.getElementById('editVehicleModal').classList.add('active');
   }
 
@@ -1015,12 +1126,54 @@
     };
 
     sbUpdate('FleetVehicles', id, updates)
-      .then(() => {
+      .then(async () => {
+        // Update connections for accessories
+        if (isAccessoryType(updates.type)) {
+          // Delete existing connections for this item then re-add
+          const existing = connections.filter(cn => cn.item_id === id);
+          for (const cn of existing) await sbDelete('FleetConnections', cn.id).catch(() => {});
+          const primaryId = document.getElementById('editVehicleConnectedTo').value;
+          if (primaryId) {
+            await sbInsert('FleetConnections', { id: genId(), item_id: id, vehicle_id: primaryId, connection_type: 'primary' }).catch(() => {});
+          }
+          const additionalIds = getAdditionalConnectionIds('editVehicleAdditionalList');
+          for (const vid of additionalIds) {
+            await sbInsert('FleetConnections', { id: genId(), item_id: id, vehicle_id: vid, connection_type: 'additional' }).catch(() => {});
+          }
+        }
         closeModal('editVehicleModal');
-        showToast('Vehicle updated!');
+        showToast('Updated!');
         loadVehicles();
       })
       .catch(err => showToast('Update failed: ' + err.message, 'error'));
+  }
+
+  function toggleConnectedToField(selectId, groupId) {
+    const sel = document.getElementById(selectId);
+    const grp = document.getElementById(groupId);
+    if (!grp) return;
+    const isAccessory = isAccessoryType(sel.value);
+    grp.style.display = isAccessory ? 'block' : 'none';
+  }
+
+  function addAdditionalConnection(selectId, listId) {
+    const sel = document.getElementById(selectId);
+    const val = sel.value;
+    if (!val) return;
+    const list = document.getElementById(listId);
+    const name = sel.options[sel.selectedIndex].text;
+    // Avoid duplicates
+    if (list.querySelector(`[data-id="${val}"]`)) return;
+    const tag = document.createElement('div');
+    tag.dataset.id = val;
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;background:var(--wave);color:white;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.8rem;margin:0.2rem;';
+    tag.innerHTML = name + ' <span style="cursor:pointer;font-weight:700;" onclick="this.parentElement.remove()">×</span>';
+    list.appendChild(tag);
+    sel.value = '';
+  }
+
+  function getAdditionalConnectionIds(listId) {
+    return Array.from(document.querySelectorAll('#' + listId + ' [data-id]')).map(el => el.dataset.id);
   }
 
   function toggleCustomType(selectId, inputId) {
@@ -1063,16 +1216,42 @@
       .catch(err => showToast('Error: ' + err.message, 'error'));
   }
 
+  function isAccessoryType(type) {
+    return ['trailer','fish_finder','boat_lift'].includes(type);
+  }
+
   function populateVehicleSelects() {
-    const options = '<option value="">Choose a vehicle...</option>' +
+    const allOptions = '<option value="">Choose a vehicle...</option>' +
       vehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+    const vehicleOnlyOptions = '<option value="">Choose a vehicle...</option>' +
+      vehicles.filter(v => !isAccessoryType(v.type)).map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
     ['docVehicleSelect', 'checklistVehicleSelect', 'advisorVehicleSelect',
      'maintenanceVehicle', 'maintenanceFilterVehicle', 'receiptVehicle'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = id === 'maintenanceFilterVehicle'
-        ? '<option value="">All Vehicles</option>' + vehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')
-        : options;
+      if (!el) return;
+      if (id === 'maintenanceFilterVehicle') {
+        el.innerHTML = '<option value="">All Vehicles</option>' + vehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+      } else if (['advisorVehicleSelect','checklistVehicleSelect'].includes(id)) {
+        el.innerHTML = allOptions; // advisors work on accessories too
+      } else {
+        el.innerHTML = allOptions;
+      }
     });
+
+    // Populate connection selects (only non-accessory vehicles as connection targets)
+    const connOpts = '<option value="">None</option>' + vehicleOnlyOptions.replace('<option value="">Choose a vehicle...</option>','');
+    const addOpts = '<option value="">+ Add another connection...</option>' + vehicleOnlyOptions.replace('<option value="">Choose a vehicle...</option>','');
+    ['vehicleConnectedTo','editVehicleConnectedTo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = connOpts;
+    });
+    ['vehicleAdditionalConnect','editVehicleAdditionalConnect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = addOpts;
+    });
+
+    renderAccessories();
   }
 
   // ============================================================
@@ -1153,7 +1332,20 @@
     };
 
     sbInsert('FleetVehicles', vehicle)
-      .then(() => { loadVehicles(); closeModal('addVehicleModal'); resetAddVehicleModal(); showToast('Vehicle saved!'); })
+      .then(async () => {
+        // Save connections if accessory type
+        if (isAccessoryType(vehicle.type)) {
+          const primaryId = document.getElementById('vehicleConnectedTo').value;
+          if (primaryId) {
+            await sbInsert('FleetConnections', { id: genId(), item_id: vehicle.id, vehicle_id: primaryId, connection_type: 'primary' }).catch(() => {});
+          }
+          const additionalIds = getAdditionalConnectionIds('vehicleAdditionalList');
+          for (const vid of additionalIds) {
+            await sbInsert('FleetConnections', { id: genId(), item_id: vehicle.id, vehicle_id: vid, connection_type: 'additional' }).catch(() => {});
+          }
+        }
+        loadVehicles(); closeModal('addVehicleModal'); resetAddVehicleModal(); showToast('Saved!');
+      })
       .catch(err => showToast('Error saving: ' + err.message, 'error'));
   }
 
@@ -1610,6 +1802,34 @@
   // ============================================================
   // VEHICLE TYPE HELPERS
   // ============================================================
+  function toggleConnectedToField(selectId, groupId) {
+    const sel = document.getElementById(selectId);
+    const grp = document.getElementById(groupId);
+    if (!grp) return;
+    const isAccessory = isAccessoryType(sel.value);
+    grp.style.display = isAccessory ? 'block' : 'none';
+  }
+
+  function addAdditionalConnection(selectId, listId) {
+    const sel = document.getElementById(selectId);
+    const val = sel.value;
+    if (!val) return;
+    const list = document.getElementById(listId);
+    const name = sel.options[sel.selectedIndex].text;
+    // Avoid duplicates
+    if (list.querySelector(`[data-id="${val}"]`)) return;
+    const tag = document.createElement('div');
+    tag.dataset.id = val;
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;background:var(--wave);color:white;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.8rem;margin:0.2rem;';
+    tag.innerHTML = name + ' <span style="cursor:pointer;font-weight:700;" onclick="this.parentElement.remove()">×</span>';
+    list.appendChild(tag);
+    sel.value = '';
+  }
+
+  function getAdditionalConnectionIds(listId) {
+    return Array.from(document.querySelectorAll('#' + listId + ' [data-id]')).map(el => el.dataset.id);
+  }
+
   function toggleCustomType(selectId, inputId) {
     const sel = document.getElementById(selectId);
     const inp = document.getElementById(inputId);
@@ -1944,9 +2164,11 @@ Include 12-18 items. Return ONLY the JSON object.`;
     section.style.display = 'block';
 
     const badge = document.getElementById('advisorContextBadge');
-    badge.innerHTML = `<strong>🚤 ${v?.name || 'Vehicle'}</strong>
+    const connectedToThis = connections.filter(cn => cn.vehicle_id === currentAdvisorVehicleId).map(cn => vehicles.find(a => a.id === cn.item_id)?.name).filter(Boolean);
+    badge.innerHTML = `<strong>${isAccessoryType(v?.type) ? '🔩' : '🚤'} ${v?.name || 'Vehicle'}</strong>
       ${[v?.year, v?.make, v?.model].filter(Boolean).join(' ')}
-      ${v?.engine_type ? ` · ${v.engine_type}` : ''}`;
+      ${v?.engine_type ? ` · ${v.engine_type}` : ''}
+      ${connectedToThis.length ? `<span style="display:block;font-size:0.85rem;opacity:0.85;margin-top:0.25rem;">Connected: ${connectedToThis.join(', ')}</span>` : ''}`;
 
     // Clear chat and show welcome
     const chat = document.getElementById('chatMessages');
@@ -1955,7 +2177,8 @@ Include 12-18 items. Return ONLY the JSON object.`;
 
     const welcome = document.createElement('div');
     welcome.className = 'chat-msg-ai';
-    welcome.textContent = `I'm ready to help with your ${v?.name || 'vehicle'}. Ask me about maintenance schedules, troubleshooting, winterization procedures, or anything else about this vehicle.`;
+    const connNote = connectedToThis.length ? ` I also know about its connected equipment: ${connectedToThis.join(', ')}.` : '';
+    welcome.textContent = `I'm ready to help with your ${v?.name || 'vehicle'}.${connNote} Ask me about maintenance, troubleshooting, winterization, or anything else.`;
     chat.appendChild(welcome);
   }
 
@@ -1993,21 +2216,48 @@ Include 12-18 items. Return ONLY the JSON object.`;
         .map(e => `- ${e.date || e.season_year || 'Unknown date'}: ${typeLabel(e.maintenance_type)} — ${e.description}${e.cost ? ` ($${e.cost})` : ''}`)
         .join('\n') || 'No maintenance history on record.';
 
-      const systemPrompt = `You are an expert marine and recreational vehicle mechanic and maintenance advisor. You know this specific vehicle well:
+      // Build connected accessories context
+      const connectedItems = connections
+        .filter(cn => cn.vehicle_id === currentAdvisorVehicleId)
+        .map(cn => vehicles.find(a => a.id === cn.item_id))
+        .filter(Boolean);
 
-Vehicle: ${v?.name || 'Unknown'}
-Type: ${v?.type || 'unknown'}  
+      const accessoryContext = connectedItems.length
+        ? '\n\nConnected Accessories/Equipment:\n' + connectedItems.map(a => {
+            const aMaint = maintenanceLog
+              .filter(e => e.vehicle_id === a.id)
+              .slice(0, 3)
+              .map(e => `  - ${e.date || e.season_year || 'Unknown'}: ${e.description}`)
+              .join('\n') || '  No maintenance history';
+            return `- ${a.name} (${typeDisplayLabel(a.type)})${a.make ? ', ' + a.make : ''}${a.model ? ' ' + a.model : ''}${a.year ? ', ' + a.year : ''}\n  Maintenance: ${aMaint}`;
+          }).join('\n')
+        : '';
+
+      // Also handle if user selected an accessory directly
+      const isAccessory = isAccessoryType(v?.type);
+      const parentConn = isAccessory ? connections.find(cn => cn.item_id === currentAdvisorVehicleId && cn.connection_type === 'primary') : null;
+      const parentVehicle = parentConn ? vehicles.find(p => p.id === parentConn.vehicle_id) : null;
+      const parentContext = parentVehicle
+        ? `\n\nThis accessory is connected to: ${parentVehicle.name} (${typeDisplayLabel(parentVehicle.type)}, ${[parentVehicle.year, parentVehicle.make, parentVehicle.model].filter(Boolean).join(' ')})`
+        : '';
+
+      const systemPrompt = `You are an expert marine and recreational vehicle mechanic and maintenance advisor. You know this specific vehicle/equipment well:
+
+${isAccessory ? 'Accessory' : 'Vehicle'}: ${v?.name || 'Unknown'}
+Type: ${typeDisplayLabel(v?.type) || 'Unknown'}
 Make/Model: ${[v?.make, v?.model].filter(Boolean).join(' ') || 'Unknown'}
 Year: ${v?.year || 'Unknown'}
 Engine: ${v?.engine_type || 'Unknown'}
 Hull/VIN: ${v?.hull_vin || 'Unknown'}
 Notes: ${v?.notes || 'None'}
 Concerns: ${Array.isArray(v?.concerns) ? v.concerns.join(', ') : (v?.concerns || 'None')}
+${parentContext}
 
 Maintenance History:
 ${history}
+${accessoryContext}
 
-Give practical, specific advice. Be concise but thorough. Reference the maintenance history when relevant. If something is a safety concern, say so clearly.`;
+Give practical, specific advice. Be concise but thorough. Reference the maintenance history when relevant. When discussing accessories or connected equipment, include relevant details about them. If something is a safety concern, say so clearly.`;
 
       advisorHistory.push({ role: 'user', content: message });
 
