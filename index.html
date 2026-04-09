@@ -550,7 +550,7 @@
   const APP_ID = 'fleet';
   const SUPABASE_URL = 'https://viprflxaudxjwsvytrnn.supabase.co';
   const STORAGE_BUCKET = 'fleet_documents';
-  const ACCESSORY_TYPES = ['trailer','fish_finder','boat_lift'];
+  const STANDALONE_TYPES = ['boat','snowmobile','jet_ski','truck'];
 
   let vehicles = [], connections = [], maintenanceLog = [], checklists = {};
   let advisorHistory = [];
@@ -574,7 +574,8 @@
     return isNaN(d) ? s : d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   }
   function fmtCost(v) { return v ? '$' + parseFloat(v).toFixed(2) : ''; }
-  function isAccessory(type) { return ACCESSORY_TYPES.includes(type); }
+  // Anything that isn't a primary standalone vehicle can optionally connect to one
+  function isAccessory(type) { return !STANDALONE_TYPES.includes(type); }
   function typeLabel(type) {
     const m = {boat:'Boat',snowmobile:'Snowmobile',jet_ski:'Jet Ski',truck:'Truck',atv:'ATV/UTV',
       trailer:'Trailer',fish_finder:'Electronics',boat_lift:'Boat Lift'};
@@ -674,7 +675,9 @@
   // ── RENDER VEHICLES ────────────────────────────────────────────
   function renderTypeFilterBar() {
     const bar = document.getElementById('typeFilterBar');
-    const types = [...new Set(vehicles.map(v => v.type).filter(Boolean))];
+    const connectedItemIds = new Set(connections.map(c => c.item_id));
+    const visibleVehicles = vehicles.filter(v => !isAccessory(v.type) || !connectedItemIds.has(v.id));
+    const types = [...new Set(visibleVehicles.map(v => v.type).filter(Boolean))];
     if (types.length < 2) { bar.innerHTML = ''; return; }
     bar.innerHTML = ['all',...types].map(t =>
       '<button class="type-filter-btn' + (vehicleTypeFilter===t?' active':'') + '" onclick="setTypeFilter(\'' + t + '\')">' +
@@ -687,7 +690,13 @@
   function renderVehicles() {
     renderTypeFilterBar();
     const grid = document.getElementById('vehicleGrid');
-    let list = vehicleTypeFilter==='all' ? vehicles : vehicles.filter(v=>v.type===vehicleTypeFilter);
+    // Hide accessories that are already connected to a parent vehicle — they show under their parent card
+    const connectedItemIds = new Set(connections.map(c => c.item_id));
+    let list = vehicles.filter(v => {
+      if (!isAccessory(v.type)) return true;          // always show standalone vehicles
+      return !connectedItemIds.has(v.id);             // only show unconnected accessories
+    });
+    if (vehicleTypeFilter !== 'all') list = list.filter(v => v.type === vehicleTypeFilter);
     grid.innerHTML = list.length ? list.map(v => vehicleCard(v)).join('')
       : '<div class="empty-state"><p>No vehicles yet. Click + Add Vehicle to get started.</p></div>';
   }
@@ -814,8 +823,11 @@
   function onTypeChange() {
     const t = document.getElementById('vType').value;
     document.getElementById('vTypeCustom').style.display = t==='other' ? 'block' : 'none';
-    document.getElementById('connectedToGroup').style.display = isAccessory(t) ? 'block' : 'none';
-    if (isAccessory(t)) populateSelects();
+    // Show connection prompt for everything except the primary standalone vehicle types
+    // Also show for 'other' since custom types are often accessories
+    const showConn = t && isAccessory(t);
+    document.getElementById('connectedToGroup').style.display = showConn ? 'block' : 'none';
+    if (showConn) populateSelects();
   }
 
   function getType() {
