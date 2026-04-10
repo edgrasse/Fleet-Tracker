@@ -142,7 +142,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 8, 2026</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 9, 2026 — Session 5</p>
 </div>
 
 <div class="container">
@@ -244,6 +244,7 @@
           <input type="text" id="chatInput" placeholder="Ask about maintenance, troubleshooting, specifications..." onkeypress="if(event.key==='Enter')sendMessage()">
           <button class="btn btn-secondary" id="sendBtn" onclick="sendMessage()">Send</button>
         </div>
+        <div id="urlManualBtns" style="display:none;margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
       </div>
     </div>
   </div>
@@ -414,6 +415,7 @@
         <option value="parts_diagram">Parts Diagram</option>
         <option value="spec_sheet">Spec Sheet</option>
         <option value="url_link">Online Manual Link</option>
+        <option value="vehicle_photo">Vehicle Photo</option>
         <option value="other">Other</option>
       </select>
     </div>
@@ -552,8 +554,8 @@
   const STORAGE_BUCKET = 'fleet_documents';
   const STANDALONE_TYPES = ['boat','snowmobile','jet_ski','truck'];
 
-  let vehicles = [], connections = [], maintenanceLog = [], checklists = {};
-  let advisorHistory = [];
+  let vehicles = [], connections = [], maintenanceLog = [], checklists = {}, vehiclePhotos = {};
+  let advisorHistory = [], advisorDocs = [];
   let currentAdvisorVehicleId = null;
   let currentChecklistVehicleId = null, currentChecklistSeason = 'spring';
   let currentDetailVehicleId = null;
@@ -658,11 +660,16 @@
     Promise.all([
       sbGet('FleetVehicles','order=name.asc'),
       sbGet('FleetConnections',''),
-      sbGet('FleetMaintenanceLog','order=date.desc')
-    ]).then(([vData, cData, mData]) => {
+      sbGet('FleetMaintenanceLog','order=date.desc'),
+      sbGet('FleetDocuments','document_type=eq.vehicle_photo&is_cover=eq.true')
+    ]).then(([vData, cData, mData, photoData]) => {
       vehicles = Array.isArray(vData) ? vData : [];
       connections = Array.isArray(cData) ? cData : [];
       maintenanceLog = Array.isArray(mData) ? mData : [];
+      vehiclePhotos = {};
+      if (Array.isArray(photoData)) {
+        photoData.forEach(p => { if (p.vehicle_id && p.file_url) vehiclePhotos[p.vehicle_id] = p.file_url; });
+      }
       renderVehicles();
       populateSelects();
       renderMaintenance();
@@ -1103,21 +1110,26 @@
       if (msg) msg.textContent = 'Analyzing ' + (i+1) + ' of ' + files.length + ': ' + file.name + '...';
 
       let fileUrl='', extractedData={}, docType='manual', isReceipt=false, receiptResult=null;
+      const isImage = file.type.startsWith('image/');
+      // Default: images are vehicle_photo, PDFs are manual
+      if (isImage) docType = 'vehicle_photo';
 
       try {
         const base64 = await fileToBase64(file);
 
-        // Try receipt extraction
+        // For PDFs and images that could be receipts — try receipt extraction
         try {
           receiptResult = await callClaude('extractReceipt', base64, file.type);
-          if (receiptResult && receiptResult.description && receiptResult.description.length > 15) {
+          // Only classify as receipt if we got a meaningful description AND a date or cost
+          if (receiptResult && receiptResult.description && receiptResult.description.length > 20 &&
+              (receiptResult.date || receiptResult.cost)) {
             isReceipt=true; docType='maintenance_receipt';
             extractedData = {summary: receiptResult.description, notes:null};
           }
         } catch(e) {}
 
-        // If not receipt, try vehicle doc extraction + field updates
-        if (!isReceipt) {
+        // If not receipt and it's a PDF, try vehicle doc extraction
+        if (!isReceipt && !isImage) {
           try {
             const vResult = await callClaude('extractVehicleDocument', base64, file.type);
             if (vResult) {
@@ -1131,7 +1143,26 @@
                 if (updates.length > 0) pendingFieldUpdates = {vehicleId, updates};
               }
               const lname = file.name.toLowerCase();
-              docType = lname.includes('title')||lname.includes('registration') ? 'vehicle_info' : 'manual';
+              if (lname.includes('title')||lname.includes('registration')) docType = 'vehicle_info';
+              else if (lname.includes('receipt')||lname.includes('invoice')) docType = 'maintenance_receipt';
+              else docType = 'manual';
+            }
+          } catch(e) {}
+        }
+
+        // If it's an image and not a receipt, try to classify it as vehicle photo or extract info
+        if (isImage && !isReceipt) {
+          docType = 'vehicle_photo';
+          // Try to extract vehicle info from the photo too (nameplate, hull sticker etc.)
+          try {
+            const vResult = await callClaude('extractVehiclePhoto', base64, file.type);
+            if (vResult && (vResult.make||vResult.model||vResult.hull_vin)) {
+              extractedData = {summary:[vResult.make,vResult.model,vResult.year].filter(Boolean).join(' ')};
+              const v = vehicles.find(v=>v.id===vehicleId);
+              if (v) {
+                const updates = buildFieldUpdates(v, vResult);
+                if (updates.length > 0) pendingFieldUpdates = {vehicleId, updates};
+              }
             }
           } catch(e) {}
         }
@@ -1141,7 +1172,7 @@
           if (msg) msg.textContent = 'Uploading ' + file.name + '...';
           fileUrl = await uploadToStorage(file, vehicleId);
         } catch(e) { fileUrl=''; } // continue without storage URL
-      } catch(e) {}
+      } catch(e) { showToast('Could not process '+file.name+' — saved without AI analysis.'); }
 
       try {
         await sbInsert('FleetDocuments', {
@@ -1171,13 +1202,14 @@
     return [
       {key:'make',label:'Make',extracted:extracted.make},
       {key:'model',label:'Model',extracted:extracted.model},
-      {key:'year',label:'Year',extracted:extracted.year},
+      {key:'year',label:'Year',extracted:extracted.year ? String(extracted.year) : null},
       {key:'engine_type',label:'Engine',extracted:extracted.engine_type},
       {key:'hull_vin',label:'Hull/VIN',extracted:extracted.hull_vin},
     ].filter(f => {
-      if (!f.extracted) return false;
+      if (!f.extracted || String(f.extracted).trim() === '') return false;
       const cur = vehicle[f.key];
-      if (!cur) return true;
+      // Show if field is empty OR value is different
+      if (cur === null || cur === undefined || String(cur).trim() === '') return true;
       return String(cur).trim().toLowerCase() !== String(f.extracted).trim().toLowerCase();
     });
   }
@@ -1260,7 +1292,7 @@
   }
 
   const DOC_TYPE_LABELS = {manual:'Manual',parts_diagram:'Parts',spec_sheet:'Spec Sheet',
-    vehicle_info:'Vehicle Info',maintenance_receipt:'Receipt',url_link:'Online Manual',other:'Document'};
+    vehicle_info:'Vehicle Info',maintenance_receipt:'Receipt',url_link:'Online Manual',vehicle_photo:'Vehicle Photo',other:'Document'};
 
   function renderDocs(docs, containerId) {
     const list = document.getElementById(containerId); if (!list) return;
@@ -1313,6 +1345,71 @@
     try {
       await sbUpdate('FleetDocuments', id, {file_name:name, document_type:type, extracted_data:{notes:notes||null,summary:notes||null}});
       closeModal('editDocModal'); showToast('Document updated!');
+      if (currentDetailVehicleId) loadDetailDocuments(currentDetailVehicleId); else onDocVehicleChange();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+  }
+
+  async function setCoverPhoto(docId, vehicleId, photoUrl) {
+    try {
+      // Clear any existing cover photos for this vehicle first
+      const existing = await sbGet('FleetDocuments','vehicle_id=eq.'+vehicleId+'&is_cover=eq.true');
+      if (Array.isArray(existing)) {
+        for (const d of existing) { await sbUpdate('FleetDocuments', d.id, {is_cover:false}).catch(()=>{}); }
+      }
+      await sbUpdate('FleetDocuments', docId, {is_cover:true});
+      vehiclePhotos[vehicleId] = photoUrl;
+      showToast('Cover photo set! ⭐');
+      renderVehicles();
+      if (currentDetailVehicleId) loadDetailDocuments(currentDetailVehicleId); else onDocVehicleChange();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+  }
+
+  async function clearCoverPhoto(docId, vehicleId) {
+    try {
+      await sbUpdate('FleetDocuments', docId, {is_cover:false});
+      delete vehiclePhotos[vehicleId];
+      showToast('Cover photo removed.');
+      renderVehicles();
+      if (currentDetailVehicleId) loadDetailDocuments(currentDetailVehicleId); else onDocVehicleChange();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+  }
+
+  async function reanalyzeDoc(docId) {
+    try {
+      const data = await sbGet('FleetDocuments','id=eq.'+docId);
+      if (!Array.isArray(data)||!data.length) return;
+      const d = data[0];
+      if (!d.file_url) { showToast('No file URL to re-analyze.','error'); return; }
+      showToast('Re-analyzing...');
+      // Fetch file via Worker proxy and re-run extraction
+      const fetchResult = await workerCall({method:'FETCH_URL', url:d.file_url});
+      if (!fetchResult||!fetchResult.base64) { showToast('Could not fetch file.','error'); return; }
+      const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(d.file_url);
+      const mediaType = isImg ? 'image/jpeg' : 'application/pdf';
+      let newType = d.document_type, newData = d.extracted_data || {};
+      try {
+        if (isImg) {
+          const r = await callClaude('extractVehiclePhoto', fetchResult.base64, mediaType);
+          if (r && (r.make||r.model)) {
+            newData = {summary:[r.make,r.model,r.year].filter(Boolean).join(' ')};
+            newType = 'vehicle_photo';
+          }
+        } else {
+          // Try receipt first
+          const r = await callClaude('extractReceipt', fetchResult.base64, mediaType);
+          if (r && r.description && r.description.length>20 && (r.date||r.cost)) {
+            newData = {summary:r.description}; newType='maintenance_receipt';
+          } else {
+            const vr = await callClaude('extractVehicleDocument', fetchResult.base64, mediaType);
+            if (vr) {
+              newData = {summary:[vr.name,vr.make,vr.model,vr.year].filter(Boolean).join(' ·')};
+              newType = d.file_url.toLowerCase().includes('title')||d.file_url.toLowerCase().includes('reg') ? 'vehicle_info' : 'manual';
+            }
+          }
+        }
+      } catch(e) { showToast('AI could not read file: '+e.message,'error'); return; }
+      await sbUpdate('FleetDocuments', docId, {document_type:newType, extracted_data:newData});
+      showToast('Re-analyzed! Type: '+(DOC_TYPE_LABELS[newType]||newType));
       if (currentDetailVehicleId) loadDetailDocuments(currentDetailVehicleId); else onDocVehicleChange();
     } catch(err) { showToast('Error: '+err.message,'error'); }
   }
@@ -1500,7 +1597,7 @@
     const section = document.getElementById('advisorSection');
     if (!currentAdvisorVehicleId) { section.style.display='none'; return; }
     const v = vehicles.find(v=>v.id===currentAdvisorVehicleId);
-    section.style.display='block'; advisorHistory=[];
+    section.style.display='block'; advisorHistory=[]; advisorDocs=[];
     const connectedItems = connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId).map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
     document.getElementById('advisorBadge').innerHTML = '<strong>'+displayName(v)+'</strong>' +
       ([v?.year,v?.make,v?.model].filter(Boolean).join(' ')?(' · '+[v?.year,v?.make,v?.model].filter(Boolean).join(' ')):'') +
@@ -1508,8 +1605,20 @@
       (connectedItems.length?'<span style="display:block;font-size:0.82rem;opacity:0.85;margin-top:0.2rem;">Connected: '+connectedItems.map(a=>displayName(a)).join(', ')+'</span>':'');
     const chat=document.getElementById('chatBox'); chat.innerHTML='';
     const welcome=document.createElement('div'); welcome.className='msg-ai';
-    welcome.textContent='Ready to help with your '+displayName(v)+'.'+(connectedItems.length?' I also know about: '+connectedItems.map(a=>displayName(a)).join(', ')+'.':'')+' Ask me anything.';
+    welcome.textContent='Loading context for '+displayName(v)+'...';
     chat.appendChild(welcome);
+    // Load documents to enrich advisor context
+    sbGet('FleetDocuments','vehicle_id=eq.'+currentAdvisorVehicleId+'&order=uploaded_date.desc')
+      .then(data => {
+        advisorDocs = Array.isArray(data)?data:[];
+        const docCount = advisorDocs.filter(d=>d.document_type!=='vehicle_photo').length;
+        welcome.textContent='Ready to help with your '+displayName(v)+'.'+
+          (connectedItems.length?' I also know about: '+connectedItems.map(a=>displayName(a)).join(', ')+'.':'')+
+          (docCount?' I have access to '+docCount+' document'+(docCount===1?'':'s')+' for this vehicle.':'')+
+          ' Ask me anything.';
+        renderAdvisorUrlManuals();
+      })
+      .catch(()=>{ welcome.textContent='Ready to help with your '+displayName(v)+'. Ask me anything.'; });
   }
 
   async function sendMessage() {
@@ -1521,15 +1630,63 @@
     chat.scrollTop=chat.scrollHeight;
     try {
       const v=vehicles.find(v=>v.id===currentAdvisorVehicleId);
-      const hist=maintenanceLog.filter(e=>e.vehicle_id===currentAdvisorVehicleId).slice(0,10).map(e=>'- '+(e.date||e.season_year||'?')+': '+maintTypeLabel(e.maintenance_type)+' — '+e.description).join('\n')||'None';
+      const hist=maintenanceLog.filter(e=>e.vehicle_id===currentAdvisorVehicleId).slice(0,10).map(e=>'- '+(e.date||e.season_year||'?')+': '+maintTypeLabel(e.maintenance_type)+' — '+e.description+(e.cost?' ($'+e.cost+')':'')).join('\n')||'None';
       const connectedItems=connections.filter(c=>c.vehicle_id===currentAdvisorVehicleId).map(c=>vehicles.find(a=>a.id===c.item_id)).filter(Boolean);
-      const system='You are an expert marine and recreational vehicle mechanic.\nVehicle: '+(v?.name||'Unknown')+(v?.nickname?' (called "'+v.nickname+'")':'')+'\nType: '+typeLabel(v?.type)+'\nMake/Model: '+([v?.make,v?.model].filter(Boolean).join(' ')||'Unknown')+'\nYear: '+(v?.year||'Unknown')+'\nEngine: '+(v?.engine_type||'Unknown')+'\nHull/VIN: '+(v?.hull_vin||'Unknown')+'\nNotes: '+(v?.notes||'None')+'\n\nMaintenance History:\n'+hist+(connectedItems.length?'\n\nConnected equipment:\n'+connectedItems.map(a=>'- '+displayName(a)+' ('+typeLabel(a.type)+')').join('\n'):'')+'\n\nGive practical, specific advice. Reference history when relevant. Flag safety concerns clearly.';
+      // Build documents context (manuals, receipts, URL links with notes)
+      let docsContext = '';
+      if (advisorDocs && advisorDocs.length) {
+        const relevantDocs = advisorDocs.filter(d=>d.document_type!=='vehicle_photo');
+        if (relevantDocs.length) {
+          const docLines = relevantDocs.map(d=>{
+            const notes=(d.extracted_data&&(d.extracted_data.notes||d.extracted_data.summary))||'';
+            if (d.document_type==='url_link') return '- [Manual Link] '+d.file_name+(notes?' — '+notes:'')+(d.file_url?' ('+d.file_url+')':'');
+            return '- ['+(DOC_TYPE_LABELS[d.document_type]||d.document_type)+'] '+d.file_name+(notes?' — '+notes:'');
+          }).join('\n');
+          docsContext = '\n\nDocuments on file:\n'+docLines;
+        }
+      }
+      const system='You are an expert marine and recreational vehicle mechanic and advisor.\nVehicle: '+(v?.name||'Unknown')+(v?.nickname?' (called "'+v.nickname+'")':'')+
+        '\nType: '+typeLabel(v?.type)+'\nMake/Model: '+([v?.make,v?.model].filter(Boolean).join(' ')||'Unknown')+
+        '\nYear: '+(v?.year||'Unknown')+'\nEngine: '+(v?.engine_type||'Unknown')+'\nHull/VIN: '+(v?.hull_vin||'Unknown')+
+        '\nNotes/Concerns: '+(v?.notes||'None')+'\n\nMaintenance History (most recent 10):\n'+hist+
+        (connectedItems.length?'\n\nConnected equipment:\n'+connectedItems.map(a=>'- '+displayName(a)+' ('+typeLabel(a.type)+')').join('\n'):'')+
+        docsContext+
+        '\n\nGive practical, specific advice. Reference the maintenance history and documents when relevant. Flag safety concerns clearly. Be concise.';
       advisorHistory.push({role:'user',content:message});
       const response=await callClaudeChat(advisorHistory,system);
       advisorHistory.push({role:'assistant',content:response});
       tDiv.textContent=response;
     } catch(err) { tDiv.textContent='Error: '+err.message; }
     btn.disabled=false; chat.scrollTop=chat.scrollHeight;
+  }
+
+  // ── URL MANUAL READER ─────────────────────────────────────────
+  function renderAdvisorUrlManuals() {
+    const btnsDiv = document.getElementById('urlManualBtns'); if (!btnsDiv) return;
+    const urlDocs = (advisorDocs||[]).filter(d=>d.document_type==='url_link'&&d.file_url);
+    if (!urlDocs.length) { btnsDiv.style.display='none'; return; }
+    btnsDiv.style.display='flex';
+    btnsDiv.innerHTML = '<span style="font-size:0.78rem;color:var(--stone);align-self:center;">Read manual:</span>' +
+      urlDocs.map(d=>'<button class="btn btn-ghost btn-sm" style="font-size:0.78rem;" onclick="readUrlManual(\''+d.file_url.replace(/'/g,"\\'")+'\',\''+d.file_name.replace(/'/g,"\\'")+'\')">🔗 '+d.file_name+'</button>').join('');
+  }
+
+  async function readUrlManual(url, name) {
+    const chat=document.getElementById('chatBox');
+    const notif=document.createElement('div'); notif.className='msg-ai';
+    notif.textContent='📖 Reading "'+name+'"...'; chat.appendChild(notif); chat.scrollTop=chat.scrollHeight;
+    try {
+      const v=vehicles.find(v=>v.id===currentAdvisorVehicleId);
+      const r = await fetch(WORKER_URL, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({appId:APP_ID, method:'CLAUDE_API', claudeMethod:'readUrlManual', url, vehicleName:v?displayName(v):''})
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      notif.innerHTML = '<strong>📖 '+name+'</strong><br><span style="white-space:pre-wrap;">'+d.result+'</span>';
+      // Add the summary into advisor history so it's available in follow-up questions
+      advisorHistory.push({role:'user', content:'[I just loaded this manual for context: "'+name+'"]'});
+      advisorHistory.push({role:'assistant', content:'I\'ve read the manual "'+name+'". '+d.result});
+    } catch(err) { notif.textContent='Could not read "'+name+'": '+err.message; }
   }
 
   // ── SHARE ──────────────────────────────────────────────────────
