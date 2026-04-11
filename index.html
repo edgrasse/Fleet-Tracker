@@ -142,7 +142,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 9, 2026 — Session 5</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 10, 2026 — Session 6</p>
 </div>
 
 <div class="container">
@@ -300,6 +300,9 @@
             <option value="atv">🏍 ATV / UTV</option>
             <option value="trailer">🚚 Trailer</option>
             <option value="fish_finder">🐟 Fish Finder / Electronics</option>
+            <option value="motor_engine">⚙️ Motor / Engine</option>
+            <option value="trolling_motor">🎣 Trolling Motor</option>
+            <option value="radio_electronics">📻 Radio / Electronics</option>
             <option value="boat_lift">⬆️ Boat Lift</option>
             <option value="other">✏️ Other</option>
           </select>
@@ -580,7 +583,8 @@
   function isAccessory(type) { return !STANDALONE_TYPES.includes(type); }
   function typeLabel(type) {
     const m = {boat:'Boat',snowmobile:'Snowmobile',jet_ski:'Jet Ski',truck:'Truck',atv:'ATV/UTV',
-      trailer:'Trailer',fish_finder:'Electronics',boat_lift:'Boat Lift'};
+      trailer:'Trailer',fish_finder:'Electronics',boat_lift:'Boat Lift',
+      motor_engine:'Motor / Engine',trolling_motor:'Trolling Motor',radio_electronics:'Radio / Electronics'};
     return m[type] || (type ? type.charAt(0).toUpperCase()+type.slice(1) : 'Vehicle');
   }
   function maintTypeLabel(t) {
@@ -775,7 +779,7 @@
     document.getElementById('editId').value = v.id;
     document.getElementById('vNickname').value = v.nickname||'';
     document.getElementById('vName').value = v.name||'';
-    const knownTypes = ['boat','snowmobile','jet_ski','truck','atv','trailer','fish_finder','boat_lift','other'];
+    const knownTypes = ['boat','snowmobile','jet_ski','truck','atv','trailer','fish_finder','boat_lift','motor_engine','trolling_motor','radio_electronics','other'];
     if (v.type && !knownTypes.includes(v.type)) {
       document.getElementById('vType').value = 'other';
       document.getElementById('vTypeCustom').value = v.type;
@@ -1560,8 +1564,24 @@
       '<div style="display:flex;gap:0.5rem;"><button class="btn btn-ghost btn-sm" onclick="generateChecklist()">🔄 Regenerate</button><button class="btn btn-primary btn-sm" onclick="saveChecklist()">💾 Save</button></div>' +
       '</div>' +
       items.map((item,i)=>
-        '<div class="checklist-item'+(item.completed?' done':'')+'"><input type="checkbox"'+(item.completed?' checked':'')+' onchange="toggleCI('+i+')">' +
-        '<div class="text">'+item.item_text+(item.completed?'<input type="text" style="width:100%;margin-top:0.4rem;padding:0.3rem 0.5rem;font-size:0.82rem;border:1px solid var(--sand);border-radius:5px;" placeholder="Note..." value="'+(item.notes||'')+'" oninput="updateCINote('+i+',this.value)">':'')+'</div></div>'
+        '<div class="checklist-item'+(item.completed?' done':'')+'" id="ci-'+i+'">' +
+          '<input type="checkbox"'+(item.completed?' checked':'')+' onchange="toggleCI('+i+')" style="margin-top:3px;flex-shrink:0;">' +
+          '<div class="text" style="flex:1;min-width:0;">' +
+            // Editable item text
+            '<div style="display:flex;align-items:center;gap:0.4rem;">' +
+              '<input type="text" value="'+item.item_text.replace(/"/g,'&quot;')+'" ' +
+                'style="flex:1;padding:0.2rem 0.4rem;border:1px solid transparent;border-radius:4px;background:transparent;font-size:0.9rem;'+(item.completed?'text-decoration:line-through;color:var(--stone);':'')+'" ' +
+                'onfocus="this.style.border=\'1px solid var(--sand)\';this.style.background=\'white\'" ' +
+                'onblur="this.style.border=\'1px solid transparent\';this.style.background=\'transparent\';updateCIText('+i+',this.value)" ' +
+                'onchange="updateCIText('+i+',this.value)">' +
+              '<button class="btn btn-danger btn-sm" style="padding:0.15rem 0.5rem;font-size:0.75rem;flex-shrink:0;" onclick="deleteCI('+i+')" title="Remove item">✕</button>' +
+            '</div>' +
+            // Notes field always visible
+            '<input type="text" placeholder="Notes (issues, parts needed, skipped reason...)" value="'+(item.notes||'')+'" ' +
+              'style="width:100%;margin-top:0.35rem;padding:0.3rem 0.5rem;font-size:0.8rem;border:1px solid var(--sand);border-radius:5px;background:white;color:var(--stone);" ' +
+              'oninput="updateCINote('+i+',this.value)">' +
+          '</div>' +
+        '</div>'
       ).join('');
   }
 
@@ -1585,6 +1605,15 @@
 
   function toggleCI(i) { const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(cl){cl.checklist_items[i].completed=!cl.checklist_items[i].completed;renderChecklistSeason();} }
   function updateCINote(i,val) { const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(cl) cl.checklist_items[i].notes=val; }
+  function updateCIText(i,val) { const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(cl&&val.trim()) cl.checklist_items[i].item_text=val.trim(); }
+  function deleteCI(i) {
+    const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(!cl) return;
+    if (!confirm('Remove this checklist item?')) return;
+    cl.checklist_items.splice(i,1);
+    // Re-number order values
+    cl.checklist_items.forEach((item,idx)=>{ item.order=idx+1; });
+    renderChecklistSeason();
+  }
   async function saveChecklist() {
     const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(!cl) return;
     try { await sbUpdate('FleetChecklists',cl.id,{checklist_items:cl.checklist_items}); showToast('Progress saved!'); }
