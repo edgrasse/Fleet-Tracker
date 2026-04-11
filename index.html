@@ -142,7 +142,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 10, 2026 — Session 6</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 11, 2026 — Session 6b</p>
 </div>
 
 <div class="container">
@@ -737,11 +737,16 @@
       (connectedItems.length ?
         '<div class="connected-items">' +
         '<div style="font-size:0.72rem;font-weight:700;color:var(--stone);text-transform:uppercase;margin-bottom:0.3rem;">Connected Equipment</div>' +
-        connectedItems.map(a =>
-          '<div class="connected-item-row" onclick="openVehicleDetail(\'' + a.id + '\')">' +
-          '🔩 <span>' + displayName(a) + '</span><span style="color:var(--stone);font-size:0.8rem;"> (' + typeLabel(a.type) + ')</span>' +
-          '<span style="margin-left:auto;font-size:0.75rem;">View →</span></div>'
-        ).join('') + '</div>' : '') +
+        connectedItems.map(a => {
+          const safeAccName = (a.name||'').replace(/'/g,"\\'");
+          return '<div class="connected-item-row" style="cursor:default;">' +
+            '<span onclick="openVehicleDetail(\'' + a.id + '\')" style="cursor:pointer;flex:1;display:flex;align-items:center;gap:0.4rem;">🔩 <span>' + displayName(a) + '</span><span style="color:var(--stone);font-size:0.8rem;"> (' + typeLabel(a.type) + ')</span></span>' +
+            '<span style="display:flex;gap:0.3rem;margin-left:auto;">' +
+              '<button class="btn btn-ghost btn-sm" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="event.stopPropagation();openEditModal(\'' + a.id + '\')">✏️</button>' +
+              '<button class="btn btn-danger btn-sm" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="event.stopPropagation();deleteVehicle(\'' + a.id + '\',\'' + safeAccName + '\')">🗑</button>' +
+            '</span>' +
+          '</div>';
+        }).join('') + '</div>' : '') +
       '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">' +
         '<button class="btn btn-primary btn-sm" onclick="openVehicleDetail(\'' + v.id + '\')">📋 View</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\'' + v.id + '\')">✏️ Edit</button>' +
@@ -793,9 +798,13 @@
     document.getElementById('vNotes').value = v.notes||'';
     if (isAccessory(v.type)) {
       document.getElementById('connectedToGroup').style.display = 'block';
-      populateSelects();
-      const primary = connections.find(c=>c.item_id===v.id && c.connection_type==='primary');
-      setTimeout(() => { document.getElementById('vConnectedTo').value = primary ? primary.vehicle_id : ''; }, 50);
+      // Build connOpts inline so the dropdown is populated before we set the value
+      const connOpts = '<option value="">No connection</option>' +
+        vehicles.filter(p => !isAccessory(p.type) && p.id !== v.id)
+          .map(p => '<option value="' + p.id + '">' + displayName(p) + '</option>').join('');
+      document.getElementById('vConnectedTo').innerHTML = connOpts;
+      const primary = connections.find(c => c.item_id === v.id && c.connection_type === 'primary');
+      document.getElementById('vConnectedTo').value = primary ? primary.vehicle_id : '';
     }
     goStep('manual');
     document.getElementById('backBtn').style.display = 'none';
@@ -850,6 +859,9 @@
     const name = document.getElementById('vName').value.trim();
     const type = getType();
     if (!name) { showToast('Full name is required.', 'error'); return; }
+    // Disable save button immediately to prevent double-tap/double-click saves
+    const saveBtn = document.querySelector('#step-manual .btn-primary');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
     const id = document.getElementById('editId').value;
     const row = {
       name, nickname: document.getElementById('vNickname').value.trim()||null, type,
@@ -881,7 +893,10 @@
         showToast('Vehicle saved!');
       }
       closeVehicleModal(); loadAll();
-    } catch(err) { showToast('Error: ' + err.message, 'error'); }
+    } catch(err) {
+      showToast('Error: ' + err.message, 'error');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+    }
   }
 
   function deleteVehicle(id, name) {
