@@ -142,7 +142,20 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 11, 2026 — Session 6b</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 12, 2026 — Session 7</p>
+</div>
+
+<!-- ACCESS GATE OVERLAY -->
+<div id="accessGate" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(26,35,50,0.97);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="background:white;border-radius:16px;padding:2.5rem;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">⚓</div>
+    <h2 style="font-family:'Playfair Display',serif;color:var(--water);margin-bottom:0.4rem;font-size:1.6rem;">Fleet Manager</h2>
+    <p style="color:var(--stone);font-size:0.9rem;margin-bottom:1.5rem;">Enter your access code to continue.</p>
+    <input type="password" id="accessCodeInput" placeholder="Access code" autocomplete="off"
+      style="width:100%;padding:0.8rem 1rem;border:2px solid var(--sand);border-radius:8px;font-size:1rem;font-family:'DM Sans',sans-serif;text-align:center;letter-spacing:0.15em;margin-bottom:0.75rem;">
+    <p id="accessError" style="display:none;color:#dc3545;font-size:0.85rem;margin-bottom:0.75rem;">Incorrect code — try again.</p>
+    <button onclick="submitAccessCode()" class="btn btn-primary" style="width:100%;padding:0.85rem;">Unlock →</button>
+  </div>
 </div>
 
 <div class="container">
@@ -431,6 +444,26 @@
   </div>
 </div>
 
+<!-- CHECKLIST → MAINTENANCE LOG MODAL -->
+<div id="checklistLogModal" class="modal" onclick="if(event.target===this)closeModal('checklistLogModal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2>📋 Log to Maintenance?</h2>
+    <p style="color:var(--stone);margin-bottom:1.25rem;">
+      You completed <strong><span id="clLogCount">0</span> items</strong> on the
+      <strong><span id="clLogSeasonLabel"></span></strong> checklist for
+      <strong><span id="clLogVehicleName"></span></strong>.
+      Select the items to log as a maintenance entry.
+    </p>
+    <div id="clLogItemList" style="max-height:280px;overflow-y:auto;margin-bottom:1rem;"></div>
+    <input type="hidden" id="clLogVehicleId">
+    <input type="hidden" id="clLogSeason">
+    <div class="modal-buttons">
+      <button class="btn btn-ghost" onclick="closeModal('checklistLogModal')">Skip — Don't Log</button>
+      <button class="btn btn-primary" onclick="saveChecklistToMaintenance()">✅ Log Selected Items</button>
+    </div>
+  </div>
+</div>
+
 <!-- RECEIPT CONFIRM -->
 <div id="receiptConfirmModal" class="modal" onclick="if(event.target===this)closeModal('receiptConfirmModal')">
   <div class="modal-content" onclick="event.stopPropagation()">
@@ -553,6 +586,7 @@
 <script>
   const WORKER_URL = 'https://grasse-apps-proxy.ed-53c.workers.dev';
   const APP_ID = 'fleet';
+  const APP_ACCESS_CODE = 'fleet2026'; // Change this to your preferred access code
   const SUPABASE_URL = 'https://viprflxaudxjwsvytrnn.supabase.co';
   const STORAGE_BUCKET = 'fleet_documents';
   const STANDALONE_TYPES = ['boat','snowmobile','jet_ski','truck'];
@@ -1631,8 +1665,60 @@
   }
   async function saveChecklist() {
     const cl=checklists[currentChecklistVehicleId]?.[currentChecklistSeason]; if(!cl) return;
-    try { await sbUpdate('FleetChecklists',cl.id,{checklist_items:cl.checklist_items}); showToast('Progress saved!'); }
+    try {
+      await sbUpdate('FleetChecklists',cl.id,{checklist_items:cl.checklist_items});
+      showToast('Progress saved!');
+      // If there are completed items, offer to log them to maintenance
+      const done = (cl.checklist_items||[]).filter(i=>i.completed);
+      if (done.length > 0) {
+        setTimeout(() => offerMaintenanceLog(cl, done), 400);
+      }
+    }
     catch(err) { showToast('Save failed.','error'); }
+  }
+
+  function offerMaintenanceLog(cl, doneItems) {
+    const v = vehicles.find(v=>v.id===currentChecklistVehicleId); if(!v) return;
+    const seasonLabel = {spring:'Spring Commissioning',summer:'Summer Maintenance',fall:'Fall Winterization',winter:'Winter Storage'}[cl.season] || cl.season;
+    document.getElementById('clLogVehicleId').value = currentChecklistVehicleId;
+    document.getElementById('clLogSeason').value = cl.season;
+    document.getElementById('clLogVehicleName').textContent = displayName(v);
+    document.getElementById('clLogSeasonLabel').textContent = seasonLabel;
+    document.getElementById('clLogCount').textContent = doneItems.length;
+    // Build item list with checkboxes — all checked by default
+    document.getElementById('clLogItemList').innerHTML = doneItems.map((item,i) =>
+      '<label style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.5rem 0;border-bottom:1px solid var(--sand);font-size:0.88rem;cursor:pointer;">' +
+        '<input type="checkbox" class="clLogItem" checked style="margin-top:2px;width:auto;accent-color:var(--success);">' +
+        '<span><strong>' + item.item_text + '</strong>' + (item.notes ? '<br><span style="color:var(--stone);font-size:0.82rem;">' + item.notes + '</span>' : '') + '</span>' +
+      '</label>'
+    ).join('');
+    document.getElementById('checklistLogModal').classList.add('active');
+  }
+
+  async function saveChecklistToMaintenance() {
+    const vehicleId = document.getElementById('clLogVehicleId').value;
+    const season = document.getElementById('clLogSeason').value;
+    const seasonLabel = {spring:'Spring Commissioning',summer:'Summer Maintenance',fall:'Fall Winterization',winter:'Winter Storage'}[season] || season;
+    const maintType = {spring:'commissioning',summer:'inspection',fall:'winterization',winter:'winterization'}[season] || 'other';
+    const checkboxes = document.querySelectorAll('.clLogItem');
+    const doneItems = checklists[vehicleId]?.[season]?.checklist_items?.filter(i=>i.completed) || [];
+    const selected = doneItems.filter((_,i) => checkboxes[i]?.checked);
+    if (!selected.length) { closeModal('checklistLogModal'); return; }
+    const desc = seasonLabel + ' checklist completed:\n' + selected.map(i => '✓ ' + i.item_text + (i.notes?' — '+i.notes:'')).join('\n');
+    const yr = new Date().getFullYear();
+    try {
+      await sbInsert('FleetMaintenanceLog', {
+        id:genId(), vehicle_id:vehicleId,
+        maintenance_type: maintType,
+        date: null,
+        season_year: seasonLabel + ' ' + yr,
+        description: desc,
+        cost: null, completed_by: null
+      });
+      showToast('✅ Logged to maintenance!');
+      loadMaintenance();
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+    closeModal('checklistLogModal');
   }
 
   // ── AI ADVISOR ─────────────────────────────────────────────────
@@ -1749,7 +1835,32 @@
     new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + ' ' +
     new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 
-  loadAll();
+  // Access gate — check session storage first so you don't re-enter each page reload
+  function checkAccess() {
+    if (sessionStorage.getItem('fleetAccess') === 'granted') { initApp(); return; }
+    document.getElementById('accessGate').style.display = 'flex';
+  }
+  function submitAccessCode() {
+    const val = document.getElementById('accessCodeInput').value.trim();
+    if (val === APP_ACCESS_CODE) {
+      sessionStorage.setItem('fleetAccess','granted');
+      document.getElementById('accessGate').style.display = 'none';
+      initApp();
+    } else {
+      document.getElementById('accessError').style.display = 'block';
+      document.getElementById('accessCodeInput').value = '';
+      document.getElementById('accessCodeInput').focus();
+    }
+  }
+  document.getElementById('accessCodeInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') submitAccessCode();
+  });
+
+  function initApp() {
+    loadAll();
+  }
+
+  checkAccess();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(reg => {
