@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fleet-v27';
+const CACHE_NAME = 'fleet-v28';
 
 // Install - keep it minimal
 self.addEventListener('install', event => {

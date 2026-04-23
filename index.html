@@ -142,7 +142,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 23, 2026 — Session 8</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 23, 2026 — Session 8b</p>
 </div>
 
 <!-- ACCESS GATE OVERLAY -->
@@ -789,7 +789,8 @@
       sbGet('FleetVehicles','order=name.asc'),
       sbGet('FleetConnections',''),
       sbGet('FleetMaintenanceLog','order=date.desc'),
-      sbGet('FleetDocuments','document_type=eq.vehicle_photo&is_cover=eq.true')
+      // is_cover column only exists if Session 5 migration was run — fail gracefully
+      sbGet('FleetDocuments','document_type=eq.vehicle_photo&is_cover=eq.true').catch(()=>[])
     ]).then(([vData, cData, mData, photoData]) => {
       vehicles = Array.isArray(vData) ? vData : [];
       connections = Array.isArray(cData) ? cData : [];
@@ -1850,9 +1851,10 @@
     const welcome=document.createElement('div'); welcome.className='msg-ai';
     welcome.innerHTML='<span class="spinner"></span> Loading...'; chat.appendChild(welcome);
     // Load documents AND saved chat in parallel
+    // FleetAdvisorChats may not exist yet if migration hasn't been run — fail gracefully
     Promise.all([
       sbGet('FleetDocuments','vehicle_id=eq.'+currentAdvisorVehicleId+'&order=uploaded_date.desc'),
-      sbGet('FleetAdvisorChats','vehicle_id=eq.'+currentAdvisorVehicleId+'&order=updated_at.desc&limit=1')
+      sbGet('FleetAdvisorChats','vehicle_id=eq.'+currentAdvisorVehicleId+'&order=updated_at.desc&limit=1').catch(()=>[])
     ]).then(([docData, chatData]) => {
       advisorDocs = Array.isArray(docData)?docData:[];
       const docCount = advisorDocs.filter(d=>d.document_type!=='vehicle_photo').length;
