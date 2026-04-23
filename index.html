@@ -767,11 +767,8 @@
     // Inline code
     html = html.replace(/`(.+?)`/g,'<code style="background:var(--foam);padding:0.1em 0.3em;border-radius:3px;font-family:monospace;font-size:0.9em;">$1</code>');
     // Line breaks — double newline = paragraph gap, single = <br>
-    html = html.replace(/
-
-/g,'<div style="margin:0.4em 0;"></div>');
-    html = html.replace(/
-/g,'<br>');
+    html = html.split('\n\n').join('<div style="margin:0.4em 0;"></div>');
+    html = html.split('\n').join('<br>');
     return html;
   }
 
