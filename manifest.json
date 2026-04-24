@@ -1,8 +1,10 @@
 {
+  "id": "/fleet-tracker/",
   "name": "Admiral Grasse's Fleet Manager",
   "short_name": "Fleet Manager",
   "description": "Track, maintain, and manage your entire fleet",
-  "start_url": "./",
+  "start_url": "/fleet-tracker/",
+  "scope": "/fleet-tracker/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#2D5F8D",
