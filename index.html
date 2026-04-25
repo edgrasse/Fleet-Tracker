@@ -142,7 +142,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 23, 2026 — Session 8b</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 25, 2026 — Session 9</p>
 </div>
 
 <!-- ACCESS GATE OVERLAY -->
@@ -1149,29 +1149,6 @@
         if (currentDetailVehicleId) loadDetailMaintenance(currentDetailVehicleId);
       })
       .catch(() => { maintenanceLog = []; renderMaintenance(); });
-  }
-
-  function renderMarkdown(text) {
-    if (!text) return '';
-    // Convert **bold** to <strong>
-    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Convert ✓ or - or * at start of line/sentence into bullet list items
-    // Split on checkmarks or " - " or " * " patterns to make bullets
-    if (text.includes('✓') || text.match(/
-[-*] /)) {
-      // Split on ✓ items
-      let parts = text.split(/✓\s*/);
-      if (parts.length > 2) {
-        const intro = parts[0].trim();
-        const items = parts.slice(1).filter(p => p.trim());
-        return (intro ? '<p style="margin:0 0 0.4rem 0;">' + intro + '</p>' : '') +
-          '<ul style="margin:0;padding-left:1.2rem;line-height:1.7;">' +
-          items.map(i => '<li>' + i.trim() + '</li>').join('') +
-          '</ul>';
-      }
-    }
-    // Fallback: just return with bold applied
-    return '<p style="margin:0;line-height:1.6;">' + text + '</p>';
   }
 
   function renderMaintenance() {
