@@ -806,6 +806,9 @@
   }
 
   // ── RENDER VEHICLES ────────────────────────────────────────────
+  const TYPE_SORT_ORDER = ['boat','trailer','snowmobile','jet_ski','truck','atv','car',
+    'boat_lift','motor_engine','trolling_motor','fish_finder','radio_electronics','lawn_garden','other'];
+
   function typeEmoji(type) {
     const m = {boat:'⛵',snowmobile:'🛷',jet_ski:'🚤',truck:'🚛',atv:'🏍️',
       trailer:'🚜',fish_finder:'📡',boat_lift:'⬆️',motor_engine:'⚙️',
@@ -815,11 +818,17 @@
 
   function renderTypeFilterBar() {
     const bar = document.getElementById('typeFilterBar');
-    const connectedItemIds = new Set(connections.map(c => c.item_id));
-    const visibleVehicles = vehicles.filter(v => !isAccessory(v.type) || !connectedItemIds.has(v.id));
-    const types = [...new Set(visibleVehicles.map(v => v.type).filter(Boolean))];
-    if (types.length === 0) { bar.innerHTML = ''; return; }
-    bar.innerHTML = ['all',...types].map(t =>
+    const allTypes = [...new Set(vehicles.map(v => v.type).filter(Boolean))];
+    allTypes.sort((a, b) => {
+      const ai = TYPE_SORT_ORDER.indexOf(a);
+      const bi = TYPE_SORT_ORDER.indexOf(b);
+      if (ai === -1 && bi === -1) return typeLabel(a).localeCompare(typeLabel(b));
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+    if (allTypes.length === 0) { bar.innerHTML = ''; return; }
+    bar.innerHTML = ['all',...allTypes].map(t =>
       '<button class="type-filter-btn' + (vehicleTypeFilter===t?' active':'') + '" onclick="setTypeFilter(\'' + t + '\')">' +
       (t==='all' ? 'All' : typeEmoji(t) + ' ' + typeLabel(t)) + '</button>'
     ).join('');
@@ -830,16 +839,20 @@
   function renderVehicles() {
     renderTypeFilterBar();
     const grid = document.getElementById('vehicleGrid');
-    // Hide accessories that are already connected to a parent vehicle — they show under their parent card
     const connectedItemIds = new Set(connections.map(c => c.item_id));
-    let list = vehicles.filter(v => {
-      if (!isAccessory(v.type)) return true;          // always show standalone vehicles
-      return !connectedItemIds.has(v.id);             // only show unconnected accessories
-    });
-    if (vehicleTypeFilter !== 'all') list = list.filter(v => v.type === vehicleTypeFilter);
+    let list;
+    if (vehicleTypeFilter !== 'all') {
+      list = vehicles.filter(v => v.type === vehicleTypeFilter);
+    } else {
+      list = vehicles.filter(v => {
+        if (!isAccessory(v.type)) return true;
+        return !connectedItemIds.has(v.id);
+      });
+    }
     grid.innerHTML = list.length ? list.map(v => vehicleCard(v)).join('')
       : '<div class="empty-state"><p>No vehicles yet. Click + Add Vehicle to get started.</p></div>';
   }
+
 
   function vehicleCard(v) {
     const nick = displayName(v);
@@ -884,17 +897,19 @@
   }
 
   function populateSelects() {
-    // Group vehicles by type for dropdowns
+    const DROPDOWN_ORDER = ['boat','trailer','snowmobile','jet_ski','truck','atv','car',
+      'boat_lift','motor_engine','trolling_motor','fish_finder','radio_electronics','lawn_garden','other'];
     function buildGroupedOpts(prefix, vlist) {
       const groups = {};
-      vlist.forEach(v => {
-        const t = v.type || 'other';
-        if (!groups[t]) groups[t] = [];
-        groups[t].push(v);
+      vlist.forEach(v => { const t = v.type||'other'; if (!groups[t]) groups[t]=[]; groups[t].push(v); });
+      const sortedTypes = Object.keys(groups).sort((a,b) => {
+        const ai=DROPDOWN_ORDER.indexOf(a), bi=DROPDOWN_ORDER.indexOf(b);
+        if (ai===-1&&bi===-1) return typeLabel(a).localeCompare(typeLabel(b));
+        if (ai===-1) return 1; if (bi===-1) return -1; return ai-bi;
       });
-      return prefix + Object.entries(groups).map(([t, vs]) =>
+      return prefix + sortedTypes.map(t =>
         '<optgroup label="' + typeLabel(t) + '">' +
-        vs.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('') +
+        groups[t].map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('') +
         '</optgroup>'
       ).join('');
     }
@@ -1136,6 +1151,29 @@
       .catch(() => { maintenanceLog = []; renderMaintenance(); });
   }
 
+  function renderMarkdown(text) {
+    if (!text) return '';
+    // Convert **bold** to <strong>
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Convert ✓ or - or * at start of line/sentence into bullet list items
+    // Split on checkmarks or " - " or " * " patterns to make bullets
+    if (text.includes('✓') || text.match(/
+[-*] /)) {
+      // Split on ✓ items
+      let parts = text.split(/✓\s*/);
+      if (parts.length > 2) {
+        const intro = parts[0].trim();
+        const items = parts.slice(1).filter(p => p.trim());
+        return (intro ? '<p style="margin:0 0 0.4rem 0;">' + intro + '</p>' : '') +
+          '<ul style="margin:0;padding-left:1.2rem;line-height:1.7;">' +
+          items.map(i => '<li>' + i.trim() + '</li>').join('') +
+          '</ul>';
+      }
+    }
+    // Fallback: just return with bold applied
+    return '<p style="margin:0;line-height:1.6;">' + text + '</p>';
+  }
+
   function renderMaintenance() {
     const list = document.getElementById('maintenanceList'); if (!list) return;
     const fv = document.getElementById('filterVehicle').value;
@@ -1160,7 +1198,7 @@
             (e.cost?'<div class="maint-item-cost">'+fmtCost(e.cost)+'</div>':'') +
           '</div>' +
         '</div>' +
-        '<div class="maint-item-desc">' + (e.description||'') + '</div>' +
+        '<div class="maint-item-desc">' + renderMarkdown(e.description||'') + '</div>' +
         (e.completed_by?'<div class="maint-item-meta">By: '+e.completed_by+'</div>':'') +
       '</div>'
     ).join('');
