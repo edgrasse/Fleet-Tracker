@@ -806,15 +806,22 @@
   }
 
   // ── RENDER VEHICLES ────────────────────────────────────────────
+  function typeEmoji(type) {
+    const m = {boat:'⛵',snowmobile:'🛷',jet_ski:'🚤',truck:'🚛',atv:'🏍️',
+      trailer:'🚜',fish_finder:'📡',boat_lift:'⬆️',motor_engine:'⚙️',
+      trolling_motor:'🔧',radio_electronics:'📻',car:'🚗',lawn_garden:'🌿',other:'📦'};
+    return m[type] || '🔹';
+  }
+
   function renderTypeFilterBar() {
     const bar = document.getElementById('typeFilterBar');
     const connectedItemIds = new Set(connections.map(c => c.item_id));
     const visibleVehicles = vehicles.filter(v => !isAccessory(v.type) || !connectedItemIds.has(v.id));
     const types = [...new Set(visibleVehicles.map(v => v.type).filter(Boolean))];
-    if (types.length < 2) { bar.innerHTML = ''; return; }
+    if (types.length === 0) { bar.innerHTML = ''; return; }
     bar.innerHTML = ['all',...types].map(t =>
       '<button class="type-filter-btn' + (vehicleTypeFilter===t?' active':'') + '" onclick="setTypeFilter(\'' + t + '\')">' +
-      (t==='all'?'All':typeLabel(t)) + '</button>'
+      (t==='all' ? 'All' : typeEmoji(t) + ' ' + typeLabel(t)) + '</button>'
     ).join('');
   }
 
@@ -877,10 +884,22 @@
   }
 
   function populateSelects() {
-    const allOpts = '<option value="">Choose a vehicle...</option>' +
-      vehicles.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
-    const filterOpts = '<option value="">All Vehicles</option>' +
-      vehicles.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
+    // Group vehicles by type for dropdowns
+    function buildGroupedOpts(prefix, vlist) {
+      const groups = {};
+      vlist.forEach(v => {
+        const t = v.type || 'other';
+        if (!groups[t]) groups[t] = [];
+        groups[t].push(v);
+      });
+      return prefix + Object.entries(groups).map(([t, vs]) =>
+        '<optgroup label="' + typeLabel(t) + '">' +
+        vs.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('') +
+        '</optgroup>'
+      ).join('');
+    }
+    const allOpts = buildGroupedOpts('<option value="">Choose a vehicle...</option>', vehicles);
+    const filterOpts = buildGroupedOpts('<option value="">All Vehicles</option>', vehicles);
     const connOpts = '<option value="">No connection</option>' +
       vehicles.filter(v=>!isAccessory(v.type)).map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
     ['docVehicleSelect','checklistVehicle','advisorVehicle','mVehicle','rVehicle'].forEach(id => {
