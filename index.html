@@ -142,7 +142,7 @@
 <div class="header">
   <h1>⚓ Admiral Grasse's Fleet Manager</h1>
   <p>Track, maintain, and manage your entire fleet</p>
-  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: April 25, 2026 — Session 9</p>
+  <p style="font-size:0.75rem;opacity:0.6;margin-top:0.3rem;" id="buildDate">Build: Jun 25, 2026 — v10.4</p>
 </div>
 
 <!-- ACCESS GATE OVERLAY -->
@@ -818,15 +818,25 @@
   function renderPartsList(vehicleId, parts) {
     if (!parts.length) return '<div style="font-size:0.82rem;color:var(--stone);font-style:italic;margin-bottom:0.4rem;">No parts yet — tap a part to add spec/number.</div>';
     return parts.map(p =>
-      '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0;border-bottom:1px solid rgba(0,0,0,0.05);" id="part-row-' + p.id + '">' +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="font-size:0.82rem;font-weight:600;color:var(--dark);">' + escHtml(p.name) + '</div>' +
-          '<input type="text" value="' + escHtml(p.spec||'') + '" placeholder="Part # or spec..." ' +
-            'style="width:100%;border:none;border-bottom:1px dashed var(--sand);background:transparent;font-size:0.78rem;color:var(--stone);padding:0.1rem 0;outline:none;" ' +
-            'onblur="savePartSpec(\'' + p.id + '\',this.value)" ' +
-            'onclick="event.stopPropagation()">' +
+      '<div style="padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.05);" id="part-row-' + p.id + '">' +
+        '<div style="display:flex;align-items:center;gap:0.4rem;">' +
+          (p.photo_url ?
+            '<img src="' + escHtml(p.photo_url) + '" onclick="event.stopPropagation();viewPartPhoto(\'' + escHtml(p.photo_url) + '\')" ' +
+              'style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0;border:1px solid var(--sand);" title="View photo">' :
+            '<button onclick="event.stopPropagation();uploadPartPhoto(\'' + p.id + '\',\'' + vehicleId + '\')" ' +
+              'style="width:44px;height:44px;background:var(--foam);border:1px dashed var(--sand);border-radius:6px;cursor:pointer;font-size:1.1rem;flex-shrink:0;color:var(--stone);" title="Add photo">📷</button>'
+          ) +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:0.82rem;font-weight:600;color:var(--dark);">' + escHtml(p.name) + '</div>' +
+            '<input type="text" value="' + escHtml(p.spec||'') + '" placeholder="Part # or spec..." ' +
+              'style="width:100%;border:none;border-bottom:1px dashed var(--sand);background:transparent;font-size:0.78rem;color:var(--stone);padding:0.1rem 0;outline:none;" ' +
+              'onblur="savePartSpec(\'' + p.id + '\',this.value)" ' +
+              'onclick="event.stopPropagation()">' +
+          '</div>' +
+          (p.photo_url ?
+            '<button onclick="event.stopPropagation();uploadPartPhoto(\'' + p.id + '\',\'' + vehicleId + '\')" style="background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.85rem;padding:0 0.2rem;flex-shrink:0;" title="Replace photo">📷</button>' : '') +
+          '<button onclick="event.stopPropagation();deletePart(\'' + p.id + '\',\'' + vehicleId + '\')" style="background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.85rem;padding:0 0.25rem;flex-shrink:0;" title="Remove">✕</button>' +
         '</div>' +
-        '<button onclick="event.stopPropagation();deletePart(\'' + p.id + '\',\'' + vehicleId + '\')" style="background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.85rem;padding:0 0.25rem;flex-shrink:0;" title="Remove">✕</button>' +
       '</div>'
     ).join('');
   }
@@ -902,6 +912,42 @@
       const listEl = document.getElementById('parts-list-' + vehicleId);
       if (listEl) listEl.innerHTML = renderPartsList(vehicleId, vehicleParts.filter(p => p.vehicle_id === vehicleId));
     } catch(e) { showToast('Error: ' + e.message); }
+  }
+
+  function uploadPartPhoto(partId, vehicleId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const rowEl = document.getElementById('part-row-' + partId);
+      const btnEl = rowEl ? rowEl.querySelector('button[title="Add photo"],button[title="Replace photo"]') : null;
+      if (btnEl) { btnEl.textContent = '⏳'; btnEl.disabled = true; }
+      try {
+        const base64 = await fileToBase64(file);
+        const result = await workerCall({
+          method:'STORAGE_UPLOAD', bucket: STORAGE_BUCKET,
+          filePath: 'parts/' + partId + '_' + Date.now() + '.' + file.name.split('.').pop().replace(/[^a-z0-9]/gi,''),
+          base64Data: base64, contentType: file.type
+        });
+        if (!result || !result.publicUrl) throw new Error('Upload failed');
+        await sbUpdate('FleetParts', partId, { photo_url: result.publicUrl });
+        const p = vehicleParts.find(x => x.id === partId);
+        if (p) p.photo_url = result.publicUrl;
+        const listEl = document.getElementById('parts-list-' + vehicleId);
+        if (listEl) listEl.innerHTML = renderPartsList(vehicleId, vehicleParts.filter(p => p.vehicle_id === vehicleId));
+        showToast('Photo saved!');
+      } catch(e) {
+        if (btnEl) { btnEl.textContent = '📷'; btnEl.disabled = false; }
+        showToast('Error: ' + e.message);
+      }
+    };
+    input.click();
+  }
+
+  function viewPartPhoto(url) {
+    window.open(url, '_blank', 'noopener');
   }
 
   // ── LOAD DATA ──────────────────────────────────────────────────
@@ -2224,9 +2270,7 @@
   }
 
   // ── INIT ───────────────────────────────────────────────────────
-  document.getElementById('buildDate').textContent = 'Build: ' +
-    new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + ' ' +
-    new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('buildDate').textContent = 'Build: Jun 25, 2026 — v10.4';
 
   // Access gate — owner bypasses entirely; guests use token link or enter code
   function checkAccess() {
