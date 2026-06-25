@@ -857,7 +857,7 @@
     if (listEl) listEl.innerHTML = '<div style="font-size:0.8rem;color:var(--stone);">Setting up parts list...</div>';
     try {
       for (let i = 0; i < defaults.length; i++) {
-        const row = { vehicle_id: vehicleId, name: defaults[i].name, spec: '', notes: '', sort_order: i };
+        const row = { id: genId(), vehicle_id: vehicleId, name: defaults[i].name, spec: '', notes: '', sort_order: i };
         const savedRaw = await sbInsert('FleetParts', row);
         const saved = Array.isArray(savedRaw) ? savedRaw[0] : savedRaw;
         if (saved && saved.id) vehicleParts.push(saved);
@@ -882,7 +882,7 @@
     if (!name || !name.trim()) return;
     try {
       const maxOrder = vehicleParts.filter(p => p.vehicle_id === vehicleId).reduce((m,p) => Math.max(m, p.sort_order||0), -1);
-      const row = { vehicle_id: vehicleId, name: name.trim(), spec: '', notes: '', sort_order: maxOrder + 1 };
+      const row = { id: genId(), vehicle_id: vehicleId, name: name.trim(), spec: '', notes: '', sort_order: maxOrder + 1 };
       const savedRaw = await sbInsert('FleetParts', row);
       const saved = Array.isArray(savedRaw) ? savedRaw[0] : savedRaw;
       if (saved && saved.id) {
