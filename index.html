@@ -704,7 +704,10 @@
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({appId:APP_ID, ...payload})
     });
-    if (!r.ok) throw new Error('Worker error: ' + r.status);
+    if (!r.ok) {
+      const errText = await r.text().catch(()=>'');
+      throw new Error('Worker error: ' + r.status + ' — ' + errText);
+    }
     return r.json();
   }
   async function sbGet(table, filters) { return workerCall({method:'SELECT', table, filters:filters||''}); }
