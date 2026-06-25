@@ -281,7 +281,10 @@
         <button class="btn btn-primary" onclick="generateShareLink()" style="width:100%;background:white;color:var(--accent);">Generate Link</button>
         <div id="shareDisplay" style="display:none;margin-top:1rem;">
           <div id="shareUrl" style="background:rgba(0,0,0,0.2);padding:0.75rem;border-radius:6px;font-family:monospace;font-size:0.8rem;word-break:break-all;margin-bottom:0.75rem;"></div>
-          <button class="btn btn-primary" onclick="copyShareLink()" style="width:100%;background:white;color:var(--accent);">Copy Link</button>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-primary" onclick="copyShareLink()" style="flex:1;background:white;color:var(--accent);">📋 Copy Link</button>
+            <button class="btn btn-primary" onclick="emailShareLink()" style="flex:1;background:white;color:var(--accent);">✉️ Email Link</button>
+          </div>
         </div>
       </div>
     </div>
@@ -649,7 +652,7 @@
   const STORAGE_BUCKET = 'fleet_documents';
   const STANDALONE_TYPES = ['boat','snowmobile','jet_ski','truck','car','lawn_garden'];
 
-  let vehicles = [], connections = [], maintenanceLog = [], checklists = {}, vehiclePhotos = {};
+  let vehicles = [], connections = [], maintenanceLog = [], checklists = {}, vehiclePhotos = {}, vehicleParts = [];
   let advisorHistory = [], advisorDocs = [];
   let currentAdvisorVehicleId = null;
   let currentChecklistVehicleId = null, currentChecklistSeason = 'spring';
@@ -780,6 +783,122 @@
     if (btn) btn.classList.add('active');
   }
 
+
+  // ── PARTS LIST ─────────────────────────────────────────────────
+  const DEFAULT_PARTS = {
+    boat:        [{name:'Engine Oil',spec:''},{name:'Oil Filter',spec:''},{name:'Fuel Filter',spec:''},{name:'Impeller',spec:''},{name:'Spark Plugs',spec:''},{name:'Lower Unit Gear Oil',spec:''},{name:'Prop',spec:''}],
+    jet_ski:     [{name:'Engine Oil',spec:''},{name:'Oil Filter',spec:''},{name:'Spark Plugs',spec:''},{name:'Wear Ring',spec:''},{name:'Jet Pump Impeller',spec:''},{name:'Fuel Filter',spec:''}],
+    snowmobile:  [{name:'Engine Oil',spec:''},{name:'Spark Plugs',spec:''},{name:'Drive Belt',spec:''},{name:'Chaincase Oil',spec:''},{name:'Fuel Filter',spec:''}],
+    truck:       [{name:'Engine Oil',spec:''},{name:'Oil Filter',spec:''},{name:'Air Filter',spec:''},{name:'Fuel Filter',spec:''},{name:'Cabin Filter',spec:''},{name:'Wiper Blades',spec:''},{name:'Brake Pads',spec:''}],
+    car:         [{name:'Engine Oil',spec:''},{name:'Oil Filter',spec:''},{name:'Air Filter',spec:''},{name:'Fuel Filter',spec:''},{name:'Cabin Filter',spec:''},{name:'Wiper Blades',spec:''},{name:'Brake Pads',spec:''}],
+    atv:         [{name:'Engine Oil',spec:''},{name:'Oil Filter',spec:''},{name:'Air Filter',spec:''},{name:'Spark Plugs',spec:''},{name:'Drive Belt',spec:''},{name:'Brake Pads',spec:''}],
+    trailer:     [{name:'Wheel Bearings',spec:''},{name:'Brake Fluid',spec:''},{name:'Trailer Lights',spec:''},{name:'Tires',spec:''}],
+    lawn_garden: [{name:'Engine Oil',spec:''},{name:'Air Filter',spec:''},{name:'Spark Plug',spec:''},{name:'Blade',spec:''},{name:'Fuel Filter',spec:''}]
+  };
+
+  function renderPartsSection(v) {
+    const vParts = vehicleParts.filter(p => p.vehicle_id === v.id);
+    const sectionId = 'parts-' + v.id;
+    const listId = 'parts-list-' + v.id;
+    return '<div style="border-top:1px solid var(--sand);margin-top:0.75rem;padding-top:0.75rem;">' +
+      '<div onclick="togglePartsSection(\'' + v.id + '\')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">' +
+        '<span style="font-size:0.8rem;font-weight:700;color:var(--water);text-transform:uppercase;letter-spacing:0.04em;">🔩 Standard Parts</span>' +
+        '<span id="parts-chevron-' + v.id + '" style="font-size:0.75rem;color:var(--stone);">▼</span>' +
+      '</div>' +
+      '<div id="' + sectionId + '" style="display:none;margin-top:0.75rem;">' +
+        '<div id="' + listId + '">' + renderPartsList(v.id, vParts) + '</div>' +
+        '<button onclick="event.stopPropagation();addCustomPart(\'' + v.id + '\')" class="btn btn-ghost btn-sm" style="margin-top:0.5rem;font-size:0.78rem;width:100%;">+ Add Part</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderPartsList(vehicleId, parts) {
+    if (!parts.length) return '<div style="font-size:0.82rem;color:var(--stone);font-style:italic;margin-bottom:0.4rem;">No parts yet — tap a part to add spec/number.</div>';
+    return parts.map(p =>
+      '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0;border-bottom:1px solid rgba(0,0,0,0.05);" id="part-row-' + p.id + '">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:0.82rem;font-weight:600;color:var(--dark);">' + escHtml(p.name) + '</div>' +
+          '<input type="text" value="' + escHtml(p.spec||'') + '" placeholder="Part # or spec..." ' +
+            'style="width:100%;border:none;border-bottom:1px dashed var(--sand);background:transparent;font-size:0.78rem;color:var(--stone);padding:0.1rem 0;outline:none;" ' +
+            'onblur="savePartSpec(\'' + p.id + '\',this.value)" ' +
+            'onclick="event.stopPropagation()">' +
+        '</div>' +
+        '<button onclick="event.stopPropagation();deletePart(\'' + p.id + '\',\'' + vehicleId + '\')" style="background:none;border:none;cursor:pointer;color:var(--stone);font-size:0.85rem;padding:0 0.25rem;flex-shrink:0;" title="Remove">✕</button>' +
+      '</div>'
+    ).join('');
+  }
+
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function togglePartsSection(vehicleId) {
+    const sec = document.getElementById('parts-' + vehicleId);
+    const chev = document.getElementById('parts-chevron-' + vehicleId);
+    if (!sec) return;
+    const open = sec.style.display === 'none';
+    sec.style.display = open ? 'block' : 'none';
+    if (chev) chev.textContent = open ? '▲' : '▼';
+    // Seed defaults on first open if no parts exist yet
+    if (open && vehicleParts.filter(p => p.vehicle_id === vehicleId).length === 0) {
+      seedDefaultParts(vehicleId);
+    }
+  }
+
+  async function seedDefaultParts(vehicleId) {
+    const v = vehicles.find(x => x.id === vehicleId);
+    if (!v) return;
+    const defaults = DEFAULT_PARTS[v.type] || [];
+    if (!defaults.length) return;
+    const listEl = document.getElementById('parts-list-' + vehicleId);
+    if (listEl) listEl.innerHTML = '<div style="font-size:0.8rem;color:var(--stone);">Setting up parts list...</div>';
+    try {
+      for (let i = 0; i < defaults.length; i++) {
+        const row = { vehicle_id: vehicleId, name: defaults[i].name, spec: '', notes: '', sort_order: i };
+        const saved = await sbInsert('FleetParts', row);
+        if (saved && saved.id) vehicleParts.push(saved);
+      }
+      const fresh = vehicleParts.filter(p => p.vehicle_id === vehicleId);
+      if (listEl) listEl.innerHTML = renderPartsList(vehicleId, fresh);
+    } catch(e) {
+      if (listEl) listEl.innerHTML = '<div style="color:#dc3545;font-size:0.8rem;">Error loading parts: ' + e.message + '</div>';
+    }
+  }
+
+  async function savePartSpec(partId, spec) {
+    try {
+      await sbUpdate('FleetParts', partId, { spec });
+      const p = vehicleParts.find(x => x.id === partId);
+      if (p) p.spec = spec;
+    } catch(e) { showToast('Error saving: ' + e.message); }
+  }
+
+  async function addCustomPart(vehicleId) {
+    const name = prompt('Part name:');
+    if (!name || !name.trim()) return;
+    try {
+      const maxOrder = vehicleParts.filter(p => p.vehicle_id === vehicleId).reduce((m,p) => Math.max(m, p.sort_order||0), -1);
+      const row = { vehicle_id: vehicleId, name: name.trim(), spec: '', notes: '', sort_order: maxOrder + 1 };
+      const saved = await sbInsert('FleetParts', row);
+      if (saved && saved.id) {
+        vehicleParts.push(saved);
+        const listEl = document.getElementById('parts-list-' + vehicleId);
+        if (listEl) listEl.innerHTML = renderPartsList(vehicleId, vehicleParts.filter(p => p.vehicle_id === vehicleId));
+        showToast('Part added!');
+      }
+    } catch(e) { showToast('Error: ' + e.message); }
+  }
+
+  async function deletePart(partId, vehicleId) {
+    if (!confirm('Remove this part?')) return;
+    try {
+      await sbDelete('FleetParts', partId);
+      vehicleParts = vehicleParts.filter(p => p.id !== partId);
+      const listEl = document.getElementById('parts-list-' + vehicleId);
+      if (listEl) listEl.innerHTML = renderPartsList(vehicleId, vehicleParts.filter(p => p.vehicle_id === vehicleId));
+    } catch(e) { showToast('Error: ' + e.message); }
+  }
+
   // ── LOAD DATA ──────────────────────────────────────────────────
   function loadAll() {
     Promise.all([
@@ -787,11 +906,13 @@
       sbGet('FleetConnections',''),
       sbGet('FleetMaintenanceLog','order=date.desc'),
       // is_cover column only exists if Session 5 migration was run — fail gracefully
-      sbGet('FleetDocuments','document_type=eq.vehicle_photo&is_cover=eq.true').catch(()=>[])
-    ]).then(([vData, cData, mData, photoData]) => {
+      sbGet('FleetDocuments','document_type=eq.vehicle_photo&is_cover=eq.true').catch(()=>[]),
+      sbGet('FleetParts','order=sort_order.asc').catch(()=>[])
+    ]).then(([vData, cData, mData, photoData, partsData]) => {
       vehicles = Array.isArray(vData) ? vData : [];
       connections = Array.isArray(cData) ? cData : [];
       maintenanceLog = Array.isArray(mData) ? mData : [];
+      vehicleParts = Array.isArray(partsData) ? partsData : [];
       vehiclePhotos = {};
       if (Array.isArray(photoData)) {
         photoData.forEach(p => { if (p.vehicle_id && p.file_url) vehiclePhotos[p.vehicle_id] = p.file_url; });
@@ -889,6 +1010,7 @@
             '</span>' +
           '</div>';
         }).join('') + '</div>' : '') +
+      renderPartsSection(v) +
       '<div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">' +
         '<button class="btn btn-primary btn-sm" onclick="openVehicleDetail(\'' + v.id + '\')">📋 View</button>' +
         '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\'' + v.id + '\')">✏️ Edit</button>' +
@@ -2082,13 +2204,18 @@
 
   // ── SHARE ──────────────────────────────────────────────────────
   function generateShareLink() {
-    const token=genId()+genId();
-    const url=window.location.origin+window.location.pathname+'?token='+token;
-    document.getElementById('shareUrl').textContent=url;
-    document.getElementById('shareDisplay').style.display='block';
+    const url = window.location.origin + window.location.pathname + '?token=' + APP_ACCESS_CODE;
+    document.getElementById('shareUrl').textContent = url;
+    document.getElementById('shareDisplay').style.display = 'block';
   }
   function copyShareLink() {
     navigator.clipboard.writeText(document.getElementById('shareUrl').textContent).then(()=>showToast('Link copied!'));
+  }
+  function emailShareLink() {
+    const url = document.getElementById('shareUrl').textContent;
+    const subject = encodeURIComponent("Admiral Grasse's Fleet Manager — Access Link");
+    const body = encodeURIComponent("Here's your access link to the Fleet Manager app:\n\n" + url + "\n\nTap the link to open it — no password needed.");
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
   }
 
   // ── INIT ───────────────────────────────────────────────────────
@@ -2096,10 +2223,22 @@
     new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) + ' ' +
     new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 
-  // Access gate — check session storage first so you don't re-enter each page reload
+  // Access gate — owner bypasses entirely; guests use token link or enter code
   function checkAccess() {
+    // Check for token in URL (shared link) — grant access and clean URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token === APP_ACCESS_CODE) {
+      sessionStorage.setItem('fleetAccess','granted');
+      window.history.replaceState({}, '', window.location.pathname);
+      initApp(); return;
+    }
+    // Already granted this session
     if (sessionStorage.getItem('fleetAccess') === 'granted') { initApp(); return; }
-    document.getElementById('accessGate').style.display = 'flex';
+    // OWNER MODE — comment out the next line to re-enable guest gate
+    initApp(); return;
+    // Guest gate — uncomment below and comment out line above when sharing
+    // document.getElementById('accessGate').style.display = 'flex';
   }
   function submitAccessCode() {
     const val = document.getElementById('accessCodeInput').value.trim();
