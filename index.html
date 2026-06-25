@@ -801,10 +801,10 @@
     const sectionId = 'parts-' + v.id;
     const listId = 'parts-list-' + v.id;
     return '<div style="border-top:1px solid var(--sand);margin-top:0.75rem;padding-top:0.75rem;">' +
-      '<div onclick="togglePartsSection(\'' + v.id + '\')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">' +
-        '<span style="font-size:0.8rem;font-weight:700;color:var(--water);text-transform:uppercase;letter-spacing:0.04em;">🔩 Standard Parts</span>' +
-        '<span id="parts-chevron-' + v.id + '" style="font-size:0.75rem;color:var(--stone);">▼</span>' +
-      '</div>' +
+      '<button onclick="togglePartsSection(\'' + v.id + '\')" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--water);color:white;border:none;border-radius:8px;padding:0.45rem 0.75rem;cursor:pointer;font-family:inherit;">' +
+        '<span style="font-size:0.8rem;font-weight:700;letter-spacing:0.04em;">🔩 Standard Parts</span>' +
+        '<span id="parts-chevron-' + v.id + '" style="font-size:0.75rem;">▼</span>' +
+      '</button>' +
       '<div id="' + sectionId + '" style="display:none;margin-top:0.75rem;">' +
         '<div id="' + listId + '">' + renderPartsList(v.id, vParts) + '</div>' +
         '<button onclick="event.stopPropagation();addCustomPart(\'' + v.id + '\')" class="btn btn-ghost btn-sm" style="margin-top:0.5rem;font-size:0.78rem;width:100%;">+ Add Part</button>' +
@@ -855,7 +855,8 @@
     try {
       for (let i = 0; i < defaults.length; i++) {
         const row = { vehicle_id: vehicleId, name: defaults[i].name, spec: '', notes: '', sort_order: i };
-        const saved = await sbInsert('FleetParts', row);
+        const savedRaw = await sbInsert('FleetParts', row);
+        const saved = Array.isArray(savedRaw) ? savedRaw[0] : savedRaw;
         if (saved && saved.id) vehicleParts.push(saved);
       }
       const fresh = vehicleParts.filter(p => p.vehicle_id === vehicleId);
@@ -879,7 +880,8 @@
     try {
       const maxOrder = vehicleParts.filter(p => p.vehicle_id === vehicleId).reduce((m,p) => Math.max(m, p.sort_order||0), -1);
       const row = { vehicle_id: vehicleId, name: name.trim(), spec: '', notes: '', sort_order: maxOrder + 1 };
-      const saved = await sbInsert('FleetParts', row);
+      const savedRaw = await sbInsert('FleetParts', row);
+      const saved = Array.isArray(savedRaw) ? savedRaw[0] : savedRaw;
       if (saved && saved.id) {
         vehicleParts.push(saved);
         const listEl = document.getElementById('parts-list-' + vehicleId);
