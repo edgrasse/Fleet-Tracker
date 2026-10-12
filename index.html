@@ -165,6 +165,7 @@
     <button onclick="showTab('documents',this)">📄 Documents</button>
     <button onclick="showTab('checklists',this)">☑️ Checklists</button>
     <button onclick="showTab('advisor',this)">🤖 AI Advisor</button>
+    <button onclick="showTab('insurance',this)">🛡️ Insurance</button>
     <button onclick="showTab('settings',this)">⚙️ Settings</button>
   </div>
 
@@ -267,6 +268,21 @@
   </div>
 
   <!-- SETTINGS -->
+  <!-- INSURANCE -->
+  <div id="tab-insurance" class="section">
+    <div id="insuranceBanner" style="display:none;background:linear-gradient(135deg,#d4380d,#e85d04);color:white;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;font-weight:600;" ></div>
+    <div class="card">
+      <h3>🛡️ Insurance Cards</h3>
+      <div class="form-group" style="max-width:340px;">
+        <label>Select Vehicle</label>
+        <select id="insVehicleSelect" onchange="renderInsuranceTab()">
+          <option value="">— All Vehicles —</option>
+        </select>
+      </div>
+      <div id="insuranceCardDisplay"></div>
+    </div>
+  </div>
+
   <div id="tab-settings" class="section">
     <div class="card">
       <h3>⚙️ Share Fleet Access</h3>
@@ -399,6 +415,7 @@
       <button class="vehicle-detail-tab active" onclick="switchDetailTab('overview',this)">Overview</button>
       <button class="vehicle-detail-tab" onclick="switchDetailTab('maintenance',this)">🔧 Maintenance</button>
       <button class="vehicle-detail-tab" onclick="switchDetailTab('documents',this)">📄 Documents</button>
+      <button class="vehicle-detail-tab" onclick="switchDetailTab('insurance',this)">🛡️ Insurance</button>
     </div>
     <div id="detail-overview" class="detail-section active">
       <div id="detailInfoGrid" class="info-grid"></div>
@@ -424,6 +441,15 @@
       <div id="detailUploadProgress" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span><span id="detailUploadMsg">Analyzing...</span></p></div></div>
       <div id="detailDocList"></div>
     </div>
+    <div id="detail-insurance" class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <span style="font-size:0.88rem;color:var(--stone);">Insurance card for this vehicle</span>
+        <button class="btn btn-secondary btn-sm" onclick="openInsuranceUpload()">📸 Upload Insurance Card</button>
+      </div>
+      <input type="file" id="insFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="handleInsuranceUpload(event)">
+      <div id="insUploadProgress" style="display:none;"><div class="ai-processing"><p><span class="spinner"></span><span id="insUploadMsg">Extracting insurance details...</span></p></div></div>
+      <div id="detailInsuranceContent"></div>
+    </div>
   </div>
 </div>
 
@@ -441,6 +467,7 @@
         <option value="spec_sheet">Spec Sheet</option>
         <option value="url_link">Online Manual Link</option>
         <option value="vehicle_photo">Vehicle Photo</option>
+        <option value="insurance_card">Insurance Card</option>
         <option value="other">Other</option>
       </select>
     </div>
@@ -468,6 +495,7 @@
         <option value="vehicle_photo">Vehicle Photo</option>
         <option value="parts_diagram">Parts Diagram</option>
         <option value="spec_sheet">Spec Sheet</option>
+        <option value="insurance_card">Insurance Card</option>
         <option value="other">Other</option>
       </select>
     </div>
@@ -653,6 +681,7 @@
   const STANDALONE_TYPES = ['boat','snowmobile','jet_ski','truck','car','lawn_garden'];
 
   let vehicles = [], connections = [], maintenanceLog = [], checklists = {}, vehiclePhotos = {}, vehicleParts = [];
+  let insuranceCards = [];
   let advisorHistory = [], advisorDocs = [];
   let currentAdvisorVehicleId = null;
   let currentChecklistVehicleId = null, currentChecklistSeason = 'spring';
@@ -958,12 +987,14 @@
       sbGet('FleetMaintenanceLog','order=date.desc'),
       // is_cover column only exists if Session 5 migration was run — fail gracefully
       sbGet('FleetDocuments','document_type=eq.vehicle_photo&is_cover=eq.true').catch(()=>[]),
-      sbGet('FleetParts','order=sort_order.asc').catch(()=>[])
-    ]).then(([vData, cData, mData, photoData, partsData]) => {
+      sbGet('FleetParts','order=sort_order.asc').catch(()=>[]),
+      sbGet('FleetDocuments','document_type=eq.insurance_card&order=uploaded_date.desc').catch(()=>[])
+    ]).then(([vData, cData, mData, photoData, partsData, insData]) => {
       vehicles = Array.isArray(vData) ? vData : [];
       connections = Array.isArray(cData) ? cData : [];
       maintenanceLog = Array.isArray(mData) ? mData : [];
       vehicleParts = Array.isArray(partsData) ? partsData : [];
+      insuranceCards = Array.isArray(insData) ? insData : [];
       vehiclePhotos = {};
       if (Array.isArray(photoData)) {
         photoData.forEach(p => { if (p.vehicle_id && p.file_url) vehiclePhotos[p.vehicle_id] = p.file_url; });
@@ -971,6 +1002,8 @@
       renderVehicles();
       populateSelects();
       renderMaintenance();
+      checkInsuranceExpiry();
+      renderInsuranceTab();
     }).catch(err => {
       document.getElementById('vehicleGrid').innerHTML =
         '<div class="empty-state"><p style="color:#dc3545">Error loading: ' + err.message + '</p></div>';
@@ -1036,7 +1069,8 @@
     const parentConn = connections.find(c=>c.item_id===v.id && c.connection_type==='primary');
     const parent = parentConn ? vehicles.find(p=>p.id===parentConn.vehicle_id) : null;
 
-    return '<div class="vehicle-card">' +
+    return '<div class="vehicle-card" style="' + (vehiclePhotos[v.id] ? 'padding-top:0;overflow:hidden;' : '') + '">' +
+      (vehiclePhotos[v.id] ? '<div style="height:160px;border-radius:10px 10px 0 0;overflow:hidden;margin:-0px 0px 1rem 0px;"><img src="' + vehiclePhotos[v.id] + '" style="width:100%;height:100%;object-fit:cover;" alt="' + nick + '"></div>' : '') +
       '<span class="type-badge">' + typeLabel(v.type) + '</span>' +
       '<div class="nickname">' + nick + '</div>' +
       (showFull ? '<div class="full-name">' + v.name + '</div>' : '') +
@@ -1095,6 +1129,8 @@
     });
     const fv = document.getElementById('filterVehicle'); if (fv) fv.innerHTML = filterOpts;
     const ct = document.getElementById('vConnectedTo'); if (ct) ct.innerHTML = connOpts;
+    const iv = document.getElementById('insVehicleSelect');
+    if (iv) iv.innerHTML = '<option value="">— All Vehicles —</option>' + vehicles.map(v => '<option value="' + v.id + '">' + displayName(v) + '</option>').join('');
   }
 
   // ── ADD / EDIT VEHICLE ─────────────────────────────────────────
@@ -1660,7 +1696,8 @@
   }
 
   const DOC_TYPE_LABELS = {manual:'Manual',parts_diagram:'Parts',spec_sheet:'Spec Sheet',
-    vehicle_info:'Vehicle Info',maintenance_receipt:'Receipt',url_link:'Online Manual',vehicle_photo:'Vehicle Photo',other:'Document'};
+    vehicle_info:'Vehicle Info',maintenance_receipt:'Receipt',url_link:'Online Manual',vehicle_photo:'Vehicle Photo',
+    insurance_card:'Insurance Card',other:'Document'};
 
   function renderDocs(docs, containerId) {
     const list = document.getElementById(containerId); if (!list) return;
@@ -1858,6 +1895,7 @@
     document.getElementById('vehicleDetailModal').classList.add('active');
     loadDetailMaintenance(vehicleId);
     loadDetailDocuments(vehicleId);
+    loadDetailInsurance(vehicleId);
   }
 
   function switchDetailTab(tab, btn) {
@@ -1865,7 +1903,8 @@
     document.querySelectorAll('.vehicle-detail-tab').forEach(b=>b.classList.remove('active'));
     const el=document.getElementById('detail-'+tab); if(el) el.classList.add('active');
     if (btn) btn.classList.add('active');
-    else { const tabs=['overview','maintenance','documents']; const btns=document.querySelectorAll('.vehicle-detail-tab'); if(btns[tabs.indexOf(tab)]) btns[tabs.indexOf(tab)].classList.add('active'); }
+    else { const tabs=['overview','maintenance','documents','insurance']; const btns=document.querySelectorAll('.vehicle-detail-tab'); if(btns[tabs.indexOf(tab)]) btns[tabs.indexOf(tab)].classList.add('active'); }
+    if (tab === 'insurance' && currentDetailVehicleId) loadDetailInsurance(currentDetailVehicleId);
   }
 
   function loadDetailMaintenance(vehicleId) {
@@ -2304,6 +2343,165 @@
   document.getElementById('accessCodeInput').addEventListener('keypress', e => {
     if (e.key === 'Enter') submitAccessCode();
   });
+
+  // ── INSURANCE CARDS ────────────────────────────────────────────
+
+  function checkInsuranceExpiry() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const warnDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expiring = insuranceCards.filter(c => {
+      const exp = c.extracted_data && c.extracted_data.expiration_date;
+      if (!exp) return false;
+      const d = new Date(exp); d.setHours(0,0,0,0);
+      return d <= warnDate;
+    });
+    const banner = document.getElementById('insuranceBanner');
+    if (!expiring.length) { if (banner) banner.style.display='none'; return; }
+    const msgs = expiring.map(c => {
+      const v = vehicles.find(x => x.id === c.vehicle_id);
+      const vName = v ? displayName(v) : 'Unknown vehicle';
+      const exp = c.extracted_data && c.extracted_data.expiration_date;
+      const d = new Date(exp); d.setHours(0,0,0,0);
+      const diff = Math.ceil((d - today) / (24*60*60*1000));
+      if (diff < 0) return '⚠️ ' + vName + ': insurance EXPIRED';
+      if (diff === 0) return '⚠️ ' + vName + ': insurance expires TODAY';
+      return '⚠️ ' + vName + ': insurance expires in ' + diff + ' day' + (diff===1?'':'s');
+    });
+    if (banner) { banner.innerHTML = msgs.join(' &nbsp;|&nbsp; '); banner.style.display='block'; }
+    // Browser notification
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        expiring.forEach(c => {
+          const v = vehicles.find(x => x.id === c.vehicle_id);
+          const vName = v ? displayName(v) : 'Vehicle';
+          const exp = c.extracted_data && c.extracted_data.expiration_date;
+          const d = new Date(exp); d.setHours(0,0,0,0);
+          const diff = Math.ceil((d - today) / (24*60*60*1000));
+          const body = diff < 0 ? 'Insurance is expired!' : diff === 0 ? 'Insurance expires today!' : 'Insurance expires in ' + diff + ' days.';
+          try { new Notification('Fleet Manager — ' + vName, { body, icon: './icon192.png' }); } catch(e){}
+        });
+      } else if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }
+
+  function renderInsuranceTab() {
+    const selVehicleId = (document.getElementById('insVehicleSelect')||{}).value || '';
+    const display = document.getElementById('insuranceCardDisplay'); if (!display) return;
+    let cards = insuranceCards;
+    if (selVehicleId) cards = cards.filter(c => c.vehicle_id === selVehicleId);
+    if (!cards.length) {
+      display.innerHTML = '<div class="empty-state"><p>No insurance cards found. Upload one from within a vehicle\'s detail view (🛡️ Insurance tab).</p></div>';
+      return;
+    }
+    // Group by vehicle, show most recent per vehicle
+    const byVehicle = {};
+    cards.forEach(c => {
+      if (!byVehicle[c.vehicle_id]) byVehicle[c.vehicle_id] = [];
+      byVehicle[c.vehicle_id].push(c);
+    });
+    display.innerHTML = Object.entries(byVehicle).map(([vid, vcards]) => {
+      const v = vehicles.find(x => x.id === vid);
+      const vName = v ? displayName(v) : 'Unknown Vehicle';
+      const card = vcards[0]; // most recent first
+      return renderInsuranceCardHTML(card, vName);
+    }).join('');
+  }
+
+  function renderInsuranceCardHTML(card, vName) {
+    const ed = card.extracted_data || {};
+    const today = new Date(); today.setHours(0,0,0,0);
+    let expiryBadge = '';
+    if (ed.expiration_date) {
+      const d = new Date(ed.expiration_date); d.setHours(0,0,0,0);
+      const diff = Math.ceil((d - today) / (24*60*60*1000));
+      if (diff < 0) expiryBadge = '<span style="background:#dc3545;color:white;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;font-weight:700;margin-left:0.5rem;">EXPIRED</span>';
+      else if (diff <= 30) expiryBadge = '<span style="background:#d4380d;color:white;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;font-weight:700;margin-left:0.5rem;">EXPIRES SOON</span>';
+      else expiryBadge = '<span style="background:#2E7D4F;color:white;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.75rem;font-weight:700;margin-left:0.5rem;">ACTIVE</span>';
+    }
+    const fields = [
+      ['Insurer', ed.insurer],
+      ['Insured', ed.insured_name],
+      ['Policy #', ed.policy_number],
+      ['Coverage', ed.coverage_type],
+      ['Vehicle', ed.vehicle_covered],
+      ['Effective', ed.effective_date],
+      ['Expires', ed.expiration_date],
+      ['Agent Phone', ed.agent_phone],
+    ].filter(([,v]) => v);
+    return '<div class="card" style="margin-bottom:1rem;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">' +
+        '<h3 style="margin:0;">🛡️ ' + vName + expiryBadge + '</h3>' +
+      '</div>' +
+      (card.file_url ? '<a href="' + card.file_url + '" target="_blank" style="display:block;margin-bottom:1rem;border-radius:8px;overflow:hidden;max-width:400px;"><img src="' + card.file_url + '" style="width:100%;border-radius:8px;border:2px solid var(--sand);" onerror="this.style.display=\'none\'" alt="Insurance Card"></a>' : '') +
+      (fields.length ? '<div class="extracted-preview"><h4>Policy Details</h4>' +
+        fields.map(([label,val]) => '<div class="extracted-field"><span>' + label + '</span><span>' + val + '</span></div>').join('') +
+      '</div>' : '') +
+      (ed.summary ? '<p style="font-size:0.85rem;color:var(--stone);font-style:italic;">' + ed.summary + '</p>' : '') +
+    '</div>';
+  }
+
+  function openInsuranceUpload() {
+    const fi = document.getElementById('insFileInput'); if (fi) fi.click();
+  }
+
+  async function handleInsuranceUpload(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const vehicleId = currentDetailVehicleId; if (!vehicleId) return;
+    const prog = document.getElementById('insUploadProgress');
+    const msg = document.getElementById('insUploadMsg');
+    if (prog) prog.style.display='block';
+    if (msg) msg.textContent = 'Uploading...';
+    try {
+      // Upload to storage
+      if (msg) msg.textContent = 'Uploading image...';
+      const fileUrl = await uploadToStorage(file, vehicleId);
+      if (msg) msg.textContent = 'Extracting insurance details with AI...';
+      // Extract with AI
+      const base64 = await fileToBase64(file);
+      const extracted = await callClaudeInsurance(base64, file.type);
+      // Save to FleetDocuments
+      const doc = {
+        id: genId(),
+        vehicle_id: vehicleId,
+        document_type: 'insurance_card',
+        file_name: file.name,
+        file_url: fileUrl,
+        uploaded_date: new Date().toISOString().split('T')[0],
+        extracted_data: extracted
+      };
+      const saved = await sbInsert('FleetDocuments', doc);
+      const savedDoc = Array.isArray(saved) ? saved[0] : saved;
+      insuranceCards.unshift(savedDoc || doc);
+      if (prog) prog.style.display='none';
+      showToast('Insurance card saved!');
+      loadDetailInsurance(vehicleId);
+      checkInsuranceExpiry();
+      renderInsuranceTab();
+    } catch(err) {
+      if (prog) prog.style.display='none';
+      showToast('Error: ' + (err.message||err), true);
+    }
+    event.target.value = '';
+  }
+
+  async function callClaudeInsurance(base64Data, mediaType) {
+    const data = await workerCall({ method: 'CLAUDE_API', claudeMethod: 'extractInsuranceCard', base64Data, mediaType });
+    if (data.error) throw new Error(data.error);
+    return data.result || {};
+  }
+
+  function loadDetailInsurance(vehicleId) {
+    const el = document.getElementById('detailInsuranceContent'); if (!el) return;
+    const cards = insuranceCards.filter(c => c.vehicle_id === vehicleId);
+    if (!cards.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:1.5rem 0;"><p>No insurance card yet. Click "Upload Insurance Card" to add one.</p></div>';
+      return;
+    }
+    const v = vehicles.find(x => x.id === vehicleId);
+    el.innerHTML = cards.map(c => renderInsuranceCardHTML(c, v ? displayName(v) : '')).join('');
+  }
 
   function initApp() {
     loadAll();
